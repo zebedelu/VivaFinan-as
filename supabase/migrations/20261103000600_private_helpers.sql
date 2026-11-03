@@ -154,6 +154,36 @@ as $$
       or exists (select 1 from public.recurring_rules where category_id = p_category_id)
 $$;
 
+create or replace function private.user_has_profile()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.profiles
+    where id = (select auth.uid())
+  )
+$$;
+
+create or replace function private.is_family_creator(p_family_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.families f
+    where f.id = p_family_id
+      and f.criado_por = (select auth.uid())
+      and f.is_demo = false
+  )
+$$;
+
+revoke all on function private.user_has_profile() from public;
+revoke all on function private.is_family_creator(uuid) from public;
 revoke all on function private.current_family_id() from public;
 revoke all on function private.is_active_member_of(uuid) from public;
 revoke all on function private.is_admin_of(uuid) from public;
@@ -167,6 +197,8 @@ revoke all on function private.family_has_profiles(uuid) from public;
 revoke all on function private.category_in_use(uuid) from public;
 
 grant usage on schema private to authenticated;
+grant execute on function private.user_has_profile() to authenticated;
+grant execute on function private.is_family_creator(uuid) to authenticated;
 grant execute on function private.current_family_id() to authenticated;
 grant execute on function private.is_active_member_of(uuid) to authenticated;
 grant execute on function private.is_admin_of(uuid) to authenticated;
