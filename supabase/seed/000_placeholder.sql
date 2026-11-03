@@ -1,0 +1,1 @@
+-- Placeholder até a Task 13. Mantém o glob ./seed/*.sql válido no CLI.
