@@ -34,7 +34,7 @@ insert into public.bank_transactions (id, bank_connection_id, bank_account_id, p
   ('88000000-0000-4000-8000-000000000302', '88000000-0000-4000-8000-000000000102', '88000000-0000-4000-8000-000000000202', 'tx-88000000-c', '2026-11-10', 20, 'Tx Carlos', 'debito', 'pendente_importacao', false),
   ('88000000-0000-4000-8000-000000000303', '88000000-0000-4000-8000-000000000103', '88000000-0000-4000-8000-000000000203', 'tx-88000000-demo', '2026-11-10', 30, 'Tx Demo', 'debito', 'pendente_importacao', true);
 
-insert into tap_out(line) select plan(26);
+insert into tap_out(line) select plan(34);
 
 set local role authenticated;
 set local request.jwt.claim.sub = '88000000-0000-4000-8000-0000000000a1';
@@ -111,6 +111,15 @@ update public.bank_transactions set status = 'ignorada' where id = '88000000-000
 reset role;
 reset request.jwt.claim.sub;
 insert into tap_out(line) select is((select status from public.bank_transactions where id = '88000000-0000-4000-8000-000000000303'), 'importada', 'dados brutos da demo continuam somente leitura');
+
+insert into tap_out(line) select is(has_table_privilege('authenticated', 'public.bank_connections', 'DELETE'), false, 'bank_connections sem grant de delete');
+insert into tap_out(line) select is(has_table_privilege('authenticated', 'public.bank_accounts', 'DELETE'), false, 'bank_accounts sem grant de delete');
+insert into tap_out(line) select is(has_table_privilege('authenticated', 'public.bank_transactions', 'DELETE'), false, 'bank_transactions sem grant de delete');
+insert into tap_out(line) select is(has_table_privilege('authenticated', 'public.bank_transactions', 'INSERT'), false, 'bank_transactions sem grant de insert');
+insert into tap_out(line) select is(has_column_privilege('authenticated', 'public.bank_transactions', 'transaction_id', 'UPDATE'), false, 'transaction_id nao e updateable');
+insert into tap_out(line) select is(has_column_privilege('authenticated', 'public.bank_transactions', 'status', 'UPDATE'), true, 'status e updateable');
+insert into tap_out(line) select is((select count(*) from pg_policies where schemaname = 'public' and tablename in ('bank_connections', 'bank_accounts', 'bank_transactions') and cmd = 'DELETE'), 0::bigint, 'sem policy de delete bancario');
+insert into tap_out(line) select is((select count(*) from pg_policies where schemaname = 'public' and tablename = 'bank_transactions' and cmd = 'INSERT'), 0::bigint, 'sem policy de insert em bank_transactions');
 
 insert into tap_out(line) select * from finish();
 

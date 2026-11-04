@@ -43,7 +43,7 @@ insert into public.ai_suggestions (id, family_id, member_id, tipo, titulo, o_que
   ('aa000000-0000-4000-8000-0000000000c1', 'aa000000-0000-4000-8000-000000000001', null, 'dica', 'Sugestao familia', 'O que', 'Por que', 'Quanto'),
   ('aa000000-0000-4000-8000-0000000000c2', 'aa000000-0000-4000-8000-000000000001', 'aa000000-0000-4000-8000-0000000000a1', 'dica', 'Sugestao Ana', 'O que', 'Por que', 'Quanto');
 
-insert into tap_out(line) select plan(32);
+insert into tap_out(line) select plan(39);
 
 set local role authenticated; set local request.jwt.claim.sub = 'aa000000-0000-4000-8000-0000000000b2';
 insert into tap_out(line) select is((select count(*) from public.goals where id = 'aa000000-0000-4000-8000-0000000000f1'), 1::bigint, 'Carlos ve a meta da familia');
@@ -107,6 +107,14 @@ reset role; reset request.jwt.claim.sub;
 
 insert into tap_out(line) select is((select lida from public.ai_suggestions where id = 'aa000000-0000-4000-8000-0000000000c1'), true, 'sugestao da familia pode ser lida por Carlos');
 insert into tap_out(line) select is((select lida from public.ai_suggestions where id = 'aa000000-0000-4000-8000-0000000000c2'), false, 'sugestao pessoal de Ana nao e lida por Carlos');
+
+insert into tap_out(line) select is(has_table_privilege('authenticated', 'public.goal_contributions', 'UPDATE'), false, 'goal_contributions sem grant de update');
+insert into tap_out(line) select is(has_table_privilege('authenticated', 'public.ai_messages', 'DELETE'), false, 'ai_messages sem grant de delete');
+insert into tap_out(line) select is(has_table_privilege('authenticated', 'public.ai_suggestions', 'DELETE'), false, 'ai_suggestions sem grant de delete');
+insert into tap_out(line) select is(has_column_privilege('authenticated', 'public.ai_suggestions', 'lida', 'UPDATE'), true, 'ai_suggestions.lida e updateable');
+insert into tap_out(line) select is(has_column_privilege('authenticated', 'public.ai_suggestions', 'o_que', 'UPDATE'), false, 'ai_suggestions.o_que nao e updateable');
+insert into tap_out(line) select is((select count(*) from pg_policies where schemaname = 'public' and tablename in ('goal_contributions', 'ai_messages') and cmd in ('UPDATE', 'DELETE')), 0::bigint, 'contribuicoes e mensagens sem policy de update/delete');
+insert into tap_out(line) select is((select count(*) from pg_policies where schemaname = 'public' and tablename = 'ai_suggestions' and cmd = 'DELETE'), 0::bigint, 'sugestoes sem policy de delete');
 
 insert into tap_out(line) select * from finish();
 

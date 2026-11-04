@@ -15,8 +15,10 @@ Fatia 1: base de dados Supabase (schema, RLS e seed demo).
 - 4 funcoes de leitura agregada da familia.
 - Familia Demo com 6 meses, 91 lancamentos, 3 metas, 4 sugestoes de IA e
   conexao bancaria simulada com 8 transacoes nos 4 status.
-- Testes pgTAP em `supabase/tests/`, executados via MCP. Detalhes em
-  [supabase/README.md](supabase/README.md).
+- Guarda de vinculo bancario (test 13): membro so linka bank tx da propria
+  conexao; link/swap/delete/cross-family recusados.
+- Testes pgTAP em `supabase/tests/` (15 arquivos, 350 assercoes), executados
+  via MCP. Detalhes em [supabase/README.md](supabase/README.md).
 
 ## Demo
 

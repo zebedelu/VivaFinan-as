@@ -14,6 +14,8 @@ supabase/
   scripts/        # caminho CLI opcional
 ```
 
+Notas de migrations: o repo inclui `20261103000100_extensions.sql` para reset do zero; o projeto hospedado ja tem `extensions` via MCP. O `rls_identity_fix` do historico esta retrofittado em `20261103000600`/`20261103000900`, sem arquivo separado.
+
 ## Execucao via MCP
 
 O projeto hospedado e acessado pelo MCP Supabase:
@@ -26,6 +28,8 @@ get_advisors(type)            # seguranca/performance
 
 Cada migration em `supabase/migrations/` e aplicada uma vez, na ordem dos
 arquivos. O seed e os testes rodam por `execute_sql`.
+
+Suite atual: 15 arquivos, 350 assercoes.
 
 ### Harness pgTAP
 
@@ -62,6 +66,16 @@ O resultado esperado de um teste verde e `ok ...` para cada assercao. Qualquer
 
 O seed `010`-`040` e idempotente: limpa os dados demo e recria; a segunda
 execucao mantem as contagens.
+
+## Correcao C1 - vinculo bancario
+
+`20261103001500_bank_link_guard.sql` adiciona `tg_guard_transaction_bank_link`
+em `transactions`: INSERT/UPDATE/DELETE com `bank_transaction_id` novo ou antigo
+exigem `private.owns_connection`; vinculo inalterado continua livre para edicao
+familiar; seed/service role (`auth.uid()` nulo) passa. O teste
+`13_bank_link_guard_test.sql` cobre link/swap/delete/cross-family, INSERT,
+link do dono em transacao de outro membro, lockout do delete e os controles
+positivos (28/28).
 
 ## Handoff para a fatia 2
 
@@ -107,6 +121,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File supabase/scripts/preflight.p
 powershell -NoProfile -ExecutionPolicy Bypass -File supabase/scripts/reset-db.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File supabase/scripts/run-tests.ps1
 ```
+
+O gate `db lint`/`pg_prove` nao rodou nesta sessao: `hosted.env` sem
+`SUPABASE_ACCESS_TOKEN`/`SUPABASE_DB_URL`. O MCP segue como harness oficial.
 
 ## Credenciais
 

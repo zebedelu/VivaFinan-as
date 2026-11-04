@@ -71,10 +71,11 @@ try {
     Invoke-RestMethod -Method Delete -Uri "$env:SUPABASE_URL/auth/v1/admin/users/$probeId" -Headers $headers -ErrorAction SilentlyContinue | Out-Null
 } catch { }
 
+$probePassword = [guid]::NewGuid().ToString('N') + 'Aa1!'
 $body = @{
     id = $probeId
     email = 'probe@vivafinancas.test'
-    password = 'Probe@2026!'
+    password = $probePassword
     email_confirm = $true
 } | ConvertTo-Json
 $probe = Invoke-RestMethod -Method Post -Uri "$env:SUPABASE_URL/auth/v1/admin/users" -Headers $headers -ContentType 'application/json' -Body $body

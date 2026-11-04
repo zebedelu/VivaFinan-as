@@ -5,7 +5,7 @@ create temp table tap_out(seq serial, line text);
 grant all on tap_out to public;
 grant all on sequence tap_out_seq_seq to public;
 
-insert into tap_out(line) select plan(33);
+insert into tap_out(line) select plan(53);
 
 insert into tap_out(line) select is((select count(*) from public.families where is_demo = true), 1::bigint, 'existe uma familia demo');
 insert into tap_out(line) select is((select count(*) from public.profiles where family_id = 'eeeeeeee-0000-4000-8000-000000000001'), 3::bigint, 'familia demo tem 3 perfis');
@@ -40,6 +40,47 @@ insert into tap_out(line) select is((select count(*) from auth.users where id in
 insert into tap_out(line) select is_empty($$ select column_name from information_schema.columns where table_schema = 'public' and table_name like 'bank_%' and column_name ~* '(password|senha|token|secret|credential|credencial)' $$, 'nenhuma coluna de credencial bancaria');
 insert into tap_out(line) select is((select count(*) from public.transactions where family_id = 'eeeeeeee-0000-4000-8000-000000000001' and data > (now() at time zone 'America/Sao_Paulo')::date), 0::bigint, 'nenhum lancamento futuro');
 insert into tap_out(line) select is((select count(*) from public.recurring_occurrences o join public.recurring_rules r on r.id = o.rule_id where r.family_id = 'eeeeeeee-0000-4000-8000-000000000001' and o.status = 'pendente' and o.mes_referencia = date_trunc('month', (now() at time zone 'America/Sao_Paulo')::date)::date), 3::bigint, '3 ocorrencias pendentes no mes corrente');
+
+insert into tap_out(line) select is((select count(*) from public.ai_messages where family_id = 'eeeeeeee-0000-4000-8000-000000000001'), 4::bigint, '4 mensagens de IA');
+insert into tap_out(line) select is((select count(*) from public.ai_messages where family_id = 'eeeeeeee-0000-4000-8000-000000000001' and member_id is null), 2::bigint, '2 mensagens de familia');
+insert into tap_out(line) select is((select count(*) from public.ai_messages where family_id = 'eeeeeeee-0000-4000-8000-000000000001' and member_id is not null), 2::bigint, '2 mensagens pessoais');
+insert into tap_out(line) select is((select count(*) from public.ai_suggestions where family_id = 'eeeeeeee-0000-4000-8000-000000000001' and member_id is null), 2::bigint, '2 sugestoes de familia');
+insert into tap_out(line) select is((select count(*) from public.ai_suggestions where family_id = 'eeeeeeee-0000-4000-8000-000000000001' and member_id is not null), 2::bigint, '2 sugestoes pessoais');
+insert into tap_out(line) select is((select count(*) from public.recurring_rules where family_id = 'eeeeeeee-0000-4000-8000-000000000001' and (
+  (descricao = 'Aluguel' and valor = 1800 and dia_vencimento = 5 and escopo = 'familia' and tipo = 'despesa') or
+  (descricao = 'Salário Ana' and valor = 6500 and dia_vencimento = 5 and escopo = 'pessoal' and tipo = 'receita') or
+  (descricao = 'Salário Carlos' and valor = 5200 and dia_vencimento = 5 and escopo = 'pessoal' and tipo = 'receita') or
+  (descricao = 'Streaming' and valor = 59.90 and dia_vencimento = 15 and escopo = 'familia' and tipo = 'despesa') or
+  (descricao = 'Música' and valor = 21.90 and dia_vencimento = 20 and escopo = 'pessoal' and tipo = 'despesa') or
+  (descricao = 'Academia' and valor = 129.90 and dia_vencimento = 10 and escopo = 'pessoal' and tipo = 'despesa')
+)), 6::bigint, '6 regras com valores, dias e escopos');
+insert into tap_out(line) select is((select count(*) from public.goals where family_id = 'eeeeeeee-0000-4000-8000-000000000001' and (
+  (titulo = 'Viagem em família' and valor_alvo = 12000 and member_id is null) or
+  (titulo = 'Curso de fotografia' and valor_alvo = 2500 and member_id = 'eeeeeeee-0000-4000-8000-0000000000a1') or
+  (titulo = 'Notebook novo' and valor_alvo = 5000 and member_id = 'eeeeeeee-0000-4000-8000-0000000000b2')
+)), 3::bigint, '3 metas com alvos e donos');
+insert into tap_out(line) select is((select count(*) from public.goal_contributions c join public.goals g on g.id = c.goal_id where g.family_id = 'eeeeeeee-0000-4000-8000-000000000001' and (
+  (g.titulo = 'Viagem em família' and c.member_id = 'eeeeeeee-0000-4000-8000-0000000000a1' and c.valor = 2000) or
+  (g.titulo = 'Viagem em família' and c.member_id = 'eeeeeeee-0000-4000-8000-0000000000b2' and c.valor = 1500) or
+  (g.titulo = 'Viagem em família' and c.member_id = 'eeeeeeee-0000-4000-8000-0000000000c3' and c.valor = 500) or
+  (g.titulo = 'Curso de fotografia' and c.member_id = 'eeeeeeee-0000-4000-8000-0000000000a1' and c.valor = 800) or
+  (g.titulo = 'Notebook novo' and c.member_id = 'eeeeeeee-0000-4000-8000-0000000000b2' and c.valor = 1200)
+)), 5::bigint, '5 contribuicoes com valores e membros');
+insert into tap_out(line) select is((select count(*) from public.categories where family_id = 'eeeeeeee-0000-4000-8000-000000000001' and personalizada = false and (
+  (tipo = 'despesa' and nome in ('Alimentação','Moradia','Transporte','Saúde','Educação','Lazer','Assinaturas','Outros')) or
+  (tipo = 'receita' and nome in ('Salário','Freelance','Investimentos','Outros'))
+)), 12::bigint, '12 categorias com nomes e tipos');
+insert into tap_out(line) select is((select min(date_trunc('month', data))::date from public.transactions where family_id = 'eeeeeeee-0000-4000-8000-000000000001'), (date_trunc('month', (now() at time zone 'America/Sao_Paulo')::date) - interval '5 months')::date, 'primeiro mes da janela');
+insert into tap_out(line) select is((select max(date_trunc('month', data))::date from public.transactions where family_id = 'eeeeeeee-0000-4000-8000-000000000001'), date_trunc('month', (now() at time zone 'America/Sao_Paulo')::date)::date, 'ultimo mes da janela');
+insert into tap_out(line) select is((select count(*) from public.transactions where family_id = 'eeeeeeee-0000-4000-8000-000000000001'), 91::bigint, '91 lancamentos');
+insert into tap_out(line) select is((select account_name || '|' || account_type || '|' || account_number_masked || '|' || (ultima_sync_em is not null)::text from public.bank_connections where id = 'eeeeeeee-0000-4000-8000-000000000301'), 'Conta Corrente|corrente|**** 4321|true', 'campos da conexao demo');
+insert into tap_out(line) select is((select nome || '|' || tipo || '|' || currency || '|' || balance from public.bank_accounts where connection_id = 'eeeeeeee-0000-4000-8000-000000000301'), 'Conta Corrente|corrente|BRL|4820.35', 'campos da conta demo');
+insert into tap_out(line) select is((select string_agg(status || ':' || n, ',' order by status) from (select status, count(*) n from public.bank_transactions where bank_connection_id = 'eeeeeeee-0000-4000-8000-000000000301' group by status) s), 'ignorada:2,importada:2,pendente_importacao:2,reconciliada:2', '2 transacoes por status');
+insert into tap_out(line) select is((select count(*) from public.bank_transactions bt join public.transactions t on t.id = bt.transaction_id where bt.bank_connection_id = 'eeeeeeee-0000-4000-8000-000000000301' and t.bank_transaction_id = bt.id), 4::bigint, '4 vinculos bidirecionais');
+insert into tap_out(line) select is((select count(*) from public.bank_transactions bt join public.transactions t on t.id = bt.transaction_id where bt.bank_connection_id = 'eeeeeeee-0000-4000-8000-000000000301' and t.bank_transaction_id is distinct from bt.id), 0::bigint, 'nenhum vinculo divergente');
+insert into tap_out(line) select is((select count(*) from auth.users where id in ('eeeeeeee-0000-4000-8000-0000000000a1','eeeeeeee-0000-4000-8000-0000000000b2','eeeeeeee-0000-4000-8000-0000000000c3') and email in ('ana@demo.vivafinancas.app','carlos@demo.vivafinancas.app','lucas@demo.vivafinancas.app')), 3::bigint, '3 e-mails demo');
+insert into tap_out(line) select is((select count(*) from auth.identities where user_id in ('eeeeeeee-0000-4000-8000-0000000000a1','eeeeeeee-0000-4000-8000-0000000000b2','eeeeeeee-0000-4000-8000-0000000000c3') and provider = 'email' and provider_id = user_id::text), 3::bigint, '3 identidades email');
+insert into tap_out(line) select is((select count(*) from auth.users where id in ('eeeeeeee-0000-4000-8000-0000000000a1','eeeeeeee-0000-4000-8000-0000000000b2','eeeeeeee-0000-4000-8000-0000000000c3') and crypt('Demo@2026!', encrypted_password) = encrypted_password), 3::bigint, 'senha demo confere no bcrypt');
 
 insert into tap_out(line) select * from finish();
 

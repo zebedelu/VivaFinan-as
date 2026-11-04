@@ -51,7 +51,7 @@ insert into public.bank_transactions (id, bank_connection_id, bank_account_id, p
   ('99000000-0000-4000-8000-000000000301', '99000000-0000-4000-8000-000000000101', '99000000-0000-4000-8000-000000000201', 'tx-99000000-a', '2026-11-10', 10, 'Tx Ana 09', 'debito', 'pendente_importacao'),
   ('99000000-0000-4000-8000-000000000302', '99000000-0000-4000-8000-000000000102', '99000000-0000-4000-8000-000000000202', 'tx-99000000-c', '2026-11-10', 20, 'Tx Carlos 09', 'debito', 'pendente_importacao');
 
-insert into tap_out(line) select plan(25);
+insert into tap_out(line) select plan(27);
 
 set local role authenticated;
 set local request.jwt.claim.sub = '99000000-0000-4000-8000-0000000000b2';
@@ -135,6 +135,9 @@ insert into tap_out(line) select is((select count(*) from public.transactions), 
 insert into tap_out(line) select throws_ok($$ insert into public.transactions (family_id, member_id, tipo, escopo, valor, category_id, data, criado_por) values ('99000000-0000-4000-8000-000000000001','99000000-0000-4000-8000-0000000000b2','despesa','pessoal',10,'99000000-0000-4000-8000-0000000000c1','2026-11-10','99000000-0000-4000-8000-0000000000b2') $$, '42501', null, 'membro inativo nao insere lancamento');
 reset role;
 reset request.jwt.claim.sub;
+
+insert into tap_out(line) select is(has_table_privilege('authenticated', 'public.recurring_rules', 'DELETE'), false, 'recurring_rules sem grant de delete');
+insert into tap_out(line) select is((select count(*) from pg_policies where schemaname = 'public' and tablename = 'recurring_rules' and cmd = 'DELETE'), 0::bigint, 'recurring_rules sem policy de delete');
 
 insert into tap_out(line) select * from finish();
 

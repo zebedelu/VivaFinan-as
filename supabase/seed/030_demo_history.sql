@@ -40,12 +40,12 @@ begin
         ('eeeeeeee-0000-4000-8000-000000000202', v_family, v_ana, v_ana, 'Curso de fotografia', 2500.00, 'em_andamento'),
         ('eeeeeeee-0000-4000-8000-000000000203', v_family, v_carlos, v_carlos, 'Notebook novo', 5000.00, 'em_andamento');
 
-    insert into public.goal_contributions (goal_id, member_id, valor) values
-        ('eeeeeeee-0000-4000-8000-000000000201', v_ana, 2000.00),
-        ('eeeeeeee-0000-4000-8000-000000000201', v_carlos, 1500.00),
-        ('eeeeeeee-0000-4000-8000-000000000201', v_lucas, 500.00),
-        ('eeeeeeee-0000-4000-8000-000000000202', v_ana, 800.00),
-        ('eeeeeeee-0000-4000-8000-000000000203', v_carlos, 1200.00);
+    insert into public.goal_contributions (goal_id, member_id, valor, data) values
+        ('eeeeeeee-0000-4000-8000-000000000201', v_ana, 2000.00, v_as_of),
+        ('eeeeeeee-0000-4000-8000-000000000201', v_carlos, 1500.00, v_as_of),
+        ('eeeeeeee-0000-4000-8000-000000000201', v_lucas, 500.00, v_as_of),
+        ('eeeeeeee-0000-4000-8000-000000000202', v_ana, 800.00, v_as_of),
+        ('eeeeeeee-0000-4000-8000-000000000203', v_carlos, 1200.00, v_as_of);
 
     for v_i in 0..5 loop
         v_mes := (v_mes_atual - (v_i || ' months')::interval)::date;

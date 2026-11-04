@@ -31,7 +31,7 @@ insert into public.categories (id, family_id, nome, tipo, personalizada, criado_
 insert into public.transactions (id, family_id, member_id, tipo, escopo, valor, category_id, data, criado_por) values
   ('77000000-0000-4000-8000-0000000000e1', '77000000-0000-4000-8000-000000000001', '77000000-0000-4000-8000-0000000000b2', 'despesa', 'pessoal', 10, '77000000-0000-4000-8000-0000000000f3', '2026-11-10', '77000000-0000-4000-8000-0000000000b2');
 
-insert into tap_out(line) select plan(31);
+insert into tap_out(line) select plan(34);
 
 set local role authenticated;
 set local request.jwt.claim.sub = '77000000-0000-4000-8000-0000000000a1';
@@ -171,6 +171,10 @@ insert into tap_out(line) select is((select count(*) from public.categories wher
 insert into tap_out(line) select is((select count(*) from public.categories where id = '77000000-0000-4000-8000-0000000000f1'), 1::bigint, 'Carlos nao apaga categoria de Ana');
 insert into tap_out(line) select is((select count(*) from public.categories where id = '77000000-0000-4000-8000-0000000000f3'), 1::bigint, 'categoria em uso nao e apagada');
 insert into tap_out(line) select is((select oculta from public.categories where id = '77000000-0000-4000-8000-0000000000f3'), true, 'categoria em uso pode ser ocultada');
+
+insert into tap_out(line) select is(has_table_privilege('authenticated', 'public.families', 'DELETE'), false, 'families sem grant de delete');
+insert into tap_out(line) select is(has_table_privilege('authenticated', 'public.profiles', 'DELETE'), false, 'profiles sem grant de delete');
+insert into tap_out(line) select is((select count(*) from pg_policies where schemaname = 'public' and tablename in ('families', 'profiles') and cmd = 'DELETE'), 0::bigint, 'familias e perfis sem policy de delete');
 
 insert into tap_out(line) select * from finish();
 
