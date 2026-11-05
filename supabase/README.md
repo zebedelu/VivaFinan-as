@@ -29,7 +29,7 @@ get_advisors(type)            # seguranca/performance
 Cada migration em `supabase/migrations/` e aplicada uma vez, na ordem dos
 arquivos. O seed e os testes rodam por `execute_sql`.
 
-Suite atual: 15 arquivos, 350 assercoes.
+Suite atual: 20 arquivos, 497 assercoes.
 
 ### Harness pgTAP
 
@@ -85,9 +85,16 @@ positivos (28/28).
 - `20261104000400_demo_bank_ignore.sql`: dono pode alterar `status` de bank tx demo; raw continua bloqueado.
 - `20261104000500_confirm_occurrence.sql`: confirmação atômica de recorrente (sem compensação destrutiva).
 - `20261104000600_ai_suggestion_dedup.sql`: índice único de dedup de sugestões.
-- Testes `14`–`18` e ajuste do `08`; a contagem da suíte será atualizada após a Phase 1a.
+- Testes `14`–`18` e ajuste do `08`/`11`; suíte 20 arquivos / 497 asserções.
 
 `auth.email()`/`auth.uid()` existem no projeto. Os default privileges do hosted concedem ALL em tabelas novas para `anon`/`authenticated`; por isso `invites` faz `revoke all` antes dos grants.
+
+### Advisors aceitos
+
+- `authenticated_security_definer_function_executable` (7): as 4 `family_*` e as 3 novas `accept_invite`, `family_forecast`, `onboard_family` são `security definer` com `search_path=''`, validação de membro/e-mail e grant só `authenticated`; `anon` sem execute.
+- `multiple_permissive_policies` em `bank_transactions` UPDATE: `bank_transactions_update` (não-demo) + `bank_transactions_update_demo` (demo) são OR do mesmo dono; o WARN é de performance, não de acesso.
+- `auth_leaked_password_protection` é pré-existente e não é da fatia 1b.
+- O teste 11 foi ajustado de 4 para 5 funções `family_*` por causa do `family_forecast`; ajuste necessário, fora do escopo original da lane.
 
 ## Handoff para a fatia 2
 
@@ -99,6 +106,7 @@ positivos (28/28).
   - `family_category_totals(p_family_id uuid, p_mes date) returns table(category_id uuid, categoria text, total numeric)`
   - `family_monthly_totals(p_family_id uuid, p_mes_fim date) returns table(mes date, receitas numeric, despesas numeric)`
   - `family_member_directory(p_family_id uuid) returns table(member_id uuid, nome text, papel text)`
+  - `family_forecast(p_family_id uuid, p_mes_inicio date) returns table(mes date, receitas numeric, despesas numeric, recorrentes_receitas numeric, recorrentes_despesas numeric, variavel_receitas numeric, variavel_despesas numeric)`
 - `p_mes`/`p_mes_fim` precisam ser o primeiro dia do mes (22023).
 - Status canonicos: `pessoal|familia`, `receita|despesa`, `debito|credito`,
   `ativo|inativo`, `pendente|confirmado|ignorado`,

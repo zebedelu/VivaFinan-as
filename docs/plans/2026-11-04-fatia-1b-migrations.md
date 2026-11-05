@@ -98,7 +98,7 @@ grant execute on function public.family_forecast(uuid, date) to authenticated;
 
 Janela e fórmula:
 - `p_mes_inicio` é o **primeiro mês previsto** (o backend passa o primeiro dia do mês seguinte ao corrente) e precisa ser o primeiro dia; 12 linhas `p_mes_inicio + 0..11 months`.
-- Recorrentes: regras ativas com ao menos uma ocorrência `confirmado` nos 6 meses que terminam no mês anterior a `p_mes_inicio`, inclusive (`>= p_mes_inicio - 6 months` e `< p_mes_inicio`); o mês corrente entra. Valor = último `valor_confirmado` não nulo ordenado por `mes_referencia desc, confirmado_em desc`, senão `valor` da regra. A regra entra em M se o dia de vencimento cai em M (clamp no último dia).
+- Recorrentes: regras ativas com ao menos uma ocorrência `confirmado` nos 6 meses que terminam no mês anterior a `p_mes_inicio`, inclusive (`>= p_mes_inicio - 6 months` e `< p_mes_inicio`); o mês corrente entra. Valor = último `valor_confirmado` não nulo ordenado por `mes_referencia desc, confirmado_em desc`, senão `valor` da regra. Todas as regras ativas com confirmação histórica entram em todos os meses; o dia de vencimento não filtra o agregado (o clamp torna todo dia 1..31 válido em todo mês).
 - Variável: média dos 3 meses completos anteriores ao mês corrente (`>= p_mes_inicio - 4 months` e `< p_mes_inicio - 1 month`) das transações com `recurring_rule_id is null`, por tipo; aplicada aos 12 meses. O mês corrente parcial não entra.
 - Retorna apenas agregados; sem `member_id`, descrição, categoria individual ou linha de membro.
 
@@ -223,7 +223,7 @@ Os testes usam `tap_out`, `begin`/`rollback`, `set local role authenticated` e G
 5. `20261104000500_confirm_occurrence.sql` via MCP `apply_migration(name='confirm_occurrence')`.
 6. `20261104000600_ai_suggestion_dedup.sql` via MCP `apply_migration(name='ai_suggestion_dedup')`.
 7. Rodar 14–18 e 08 via MCP; depois os 15 arquivos antigos + 13; a suíte final deve ficar verde com a contagem nova.
-8. `get_advisors('security')`: sem novo WARN; as RPCs `security definer` só para `authenticated`; `anon` sem execute; `invites` sem ALL/default privileges.
+8. `get_advisors('security')`: WARNs esperados documentados (3 security definer + multiple_permissive_policies); as RPCs `security definer` só para `authenticated`; `anon` sem execute; `invites` sem ALL/default privileges.
 9. Seed 2x + login demo; o demo não muda.
 
 ## Aceite

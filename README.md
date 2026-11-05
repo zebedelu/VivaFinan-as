@@ -11,13 +11,14 @@ Fatia 1: base de dados Supabase (schema, RLS e seed demo).
 
 ## O que está pronto
 
-- 13 tabelas com constraints, triggers e RLS por membro.
-- 4 funcoes de leitura agregada da familia.
+- 14 tabelas com constraints, triggers e RLS por membro.
+- 5 funcoes de leitura/forecast da familia.
+- Fatia 1b: invites/accept, family_forecast, onboard_family, demo ignore, confirm_occurrence e dedup de IA.
 - Familia Demo com 6 meses, 91 lancamentos, 3 metas, 4 sugestoes de IA e
   conexao bancaria simulada com 8 transacoes nos 4 status.
 - Guarda de vinculo bancario (test 13): membro so linka bank tx da propria
   conexao; link/swap/delete/cross-family recusados.
-- Testes pgTAP em `supabase/tests/` (15 arquivos, 350 assercoes), executados
+- Testes pgTAP em `supabase/tests/` (20 arquivos, 497 assercoes), executados
   via MCP. Detalhes em [supabase/README.md](supabase/README.md).
 
 ## Demo

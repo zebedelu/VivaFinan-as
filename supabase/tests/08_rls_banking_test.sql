@@ -34,7 +34,7 @@ insert into public.bank_transactions (id, bank_connection_id, bank_account_id, p
   ('88000000-0000-4000-8000-000000000302', '88000000-0000-4000-8000-000000000102', '88000000-0000-4000-8000-000000000202', 'tx-88000000-c', '2026-11-10', 20, 'Tx Carlos', 'debito', 'pendente_importacao', false),
   ('88000000-0000-4000-8000-000000000303', '88000000-0000-4000-8000-000000000103', '88000000-0000-4000-8000-000000000203', 'tx-88000000-demo', '2026-11-10', 30, 'Tx Demo', 'debito', 'pendente_importacao', true);
 
-insert into tap_out(line) select plan(34);
+insert into tap_out(line) select plan(36);
 
 set local role authenticated;
 set local request.jwt.claim.sub = '88000000-0000-4000-8000-0000000000a1';
@@ -80,9 +80,24 @@ reset request.jwt.claim.sub;
 
 insert into tap_out(line) select is((select status from public.bank_transactions where id = '88000000-0000-4000-8000-000000000301'), 'ignorada', 'Ana atualiza o status da propria transacao');
 insert into tap_out(line) select is((select status from public.bank_transactions where id = '88000000-0000-4000-8000-000000000302'), 'pendente_importacao', 'Ana nao atualiza a transacao de Carlos');
-insert into tap_out(line) select is((select status from public.bank_transactions where id = '88000000-0000-4000-8000-000000000303'), 'pendente_importacao', 'Ana nao atualiza a transacao demo');
+insert into tap_out(line) select is((select status from public.bank_transactions where id = '88000000-0000-4000-8000-000000000303'), 'ignorada', 'Ana atualiza o status da transacao demo');
 insert into tap_out(line) select is((select nome from public.bank_accounts where id = '88000000-0000-4000-8000-000000000201'), 'Conta Ana Editada', 'Ana atualiza a propria conta');
 insert into tap_out(line) select is((select nome from public.bank_accounts where id = '88000000-0000-4000-8000-000000000203'), 'Conta Demo', 'Ana nao atualiza a conta demo');
+
+update public.bank_transactions set status = 'pendente_importacao' where id = '88000000-0000-4000-8000-000000000303';
+
+set local role authenticated;
+set local request.jwt.claim.sub = '88000000-0000-4000-8000-0000000000b2';
+update public.bank_transactions set status = 'ignorada' where id = '88000000-0000-4000-8000-000000000303';
+reset role;
+reset request.jwt.claim.sub;
+insert into tap_out(line) select is((select status from public.bank_transactions where id = '88000000-0000-4000-8000-000000000303'), 'pendente_importacao', 'outro membro nao atualiza a transacao demo');
+
+set local role authenticated;
+set local request.jwt.claim.sub = '88000000-0000-4000-8000-0000000000a1';
+insert into tap_out(line) select throws_ok($$ update public.bank_transactions set valor = 99 where id = '88000000-0000-4000-8000-000000000303' $$, '42501', null, 'campos brutos da demo continuam bloqueados');
+reset role;
+reset request.jwt.claim.sub;
 
 set local role authenticated;
 set local request.jwt.claim.sub = '88000000-0000-4000-8000-0000000000a1';
@@ -107,10 +122,9 @@ insert into tap_out(line) select is((select status || '|' || coalesce(transactio
 
 set local role authenticated;
 set local request.jwt.claim.sub = '88000000-0000-4000-8000-0000000000a1';
-update public.bank_transactions set status = 'ignorada' where id = '88000000-0000-4000-8000-000000000303';
+insert into tap_out(line) select throws_ok($$ update public.bank_transactions set status = 'ignorada' where id = '88000000-0000-4000-8000-000000000303' $$, '23514', null, 'demo importada nao pode ser ignorada sem limpar o vinculo');
 reset role;
 reset request.jwt.claim.sub;
-insert into tap_out(line) select is((select status from public.bank_transactions where id = '88000000-0000-4000-8000-000000000303'), 'importada', 'dados brutos da demo continuam somente leitura');
 
 insert into tap_out(line) select is(has_table_privilege('authenticated', 'public.bank_connections', 'DELETE'), false, 'bank_connections sem grant de delete');
 insert into tap_out(line) select is(has_table_privilege('authenticated', 'public.bank_accounts', 'DELETE'), false, 'bank_accounts sem grant de delete');

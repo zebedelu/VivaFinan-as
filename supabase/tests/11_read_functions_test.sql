@@ -65,7 +65,7 @@ insert into tap_out(line) select is(has_function_privilege('authenticated', 'pub
 insert into tap_out(line) select is(has_function_privilege('authenticated', 'private.assert_family_member(uuid)', 'EXECUTE'), false, 'authenticated nao executa assert_family_member');
 insert into tap_out(line) select is((select p.proargnames[3:5] from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'family_category_totals'), array['category_id','categoria','total'], 'family_category_totals devolve colunas agregadas');
 insert into tap_out(line) select is((select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname in ('family_totals','family_category_totals','family_monthly_totals') and not ('member_id' = any(p.proargnames))), 3::bigint, 'funcoes de totais nao devolvem member_id');
-insert into tap_out(line) select is((select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname like 'family_%' and p.prosecdef and (p.proconfig @> array['search_path='] or p.proconfig @> array['search_path=""'])), 4::bigint, 'family_* sao security definer com search_path vazio');
+insert into tap_out(line) select is((select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname like 'family_%' and p.prosecdef and (p.proconfig @> array['search_path='] or p.proconfig @> array['search_path=""'])), 5::bigint, 'family_* sao security definer com search_path vazio (inclui forecast)');
 
 insert into tap_out(line) select * from finish();
 
