@@ -77,6 +77,18 @@ familiar; seed/service role (`auth.uid()` nulo) passa. O teste
 link do dono em transacao de outro membro, lockout do delete e os controles
 positivos (28/28).
 
+## Fatia 1b - migrations de fechamento
+
+- `20261104000100_invites.sql`: tabela `invites`, RLS e `accept_invite` (convite/aceite; só membro).
+- `20261104000200_family_forecast.sql`: RPC de forecast familiar (12 meses; sem membro/descrição).
+- `20261104000300_onboard_family.sql`: onboarding atômico/idempotente.
+- `20261104000400_demo_bank_ignore.sql`: dono pode alterar `status` de bank tx demo; raw continua bloqueado.
+- `20261104000500_confirm_occurrence.sql`: confirmação atômica de recorrente (sem compensação destrutiva).
+- `20261104000600_ai_suggestion_dedup.sql`: índice único de dedup de sugestões.
+- Testes `14`–`18` e ajuste do `08`; a contagem da suíte será atualizada após a Phase 1a.
+
+`auth.email()`/`auth.uid()` existem no projeto. Os default privileges do hosted concedem ALL em tabelas novas para `anon`/`authenticated`; por isso `invites` faz `revoke all` antes dos grants.
+
 ## Handoff para a fatia 2
 
 - Funcoes de leitura (schema `public`, `security definer`, `search_path=''`,
