@@ -91,6 +91,8 @@ positivos (28/28).
 
 ## Handoff para a fatia 2
 
+- Fatia 1b: `invites` (family_nome), `accept_invite`, `family_forecast`, `onboard_family`, `confirm_occurrence`, dedup de IA; `bank_transactions_update_demo`.
+
 - Funcoes de leitura (schema `public`, `security definer`, `search_path=''`,
   apenas `authenticated`):
   - `family_totals(p_family_id uuid, p_mes date) returns table(receitas numeric, despesas numeric)`

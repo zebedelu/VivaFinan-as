@@ -2,7 +2,7 @@
 
 **Data:** 2026-11-04
 **Depende de:** fatia 1 (`629fce9`), 350/350 pgTAP.
-**Gate 0:** Conditional; remediation em `docs/plans/2026-11-04-gate0-remediation.md`; re-review attempt 2 em `docs/plans/2026-11-04-v1-execution.md`.
+**Gate 0:** attempt 3 final; remediation + contrato canônico; plano 1b v2 aprovado condicional.
 **Decisão:** full spec; DB URL no pooler `aws-1-us-west-2:6543` OK; service role OK.
 **Ownership:** lane de migrations escreve `supabase/migrations/2026110400*.sql`, `supabase/tests/14_*`..`18_*` e o ajuste de `08_rls_banking_test.sql`. Nenhuma lane de backend/frontend toca nesses arquivos.
 
@@ -17,6 +17,13 @@ Fechar os buracos de schema/contrato do gate 0 sem service role em leitura/escri
 5. RPC `confirm_occurrence` (confirmação atômica de recorrente; sem compensação destrutiva).
 6. Índice único de dedup de `ai_suggestions` (geração idempotente).
 7. Ajuste do teste 08 e da suíte.
+
+## Correções do gate 0 attempt 3
+
+- `invites.family_nome` snapshot (1..80); se `20261104000100` já aplicada, criar `20261104000700_invites_family_nome.sql`; incluir no test 14.
+- `accept_invite`: validar `p_nome`/`v_inv.nome` com 1..80 (22023).
+- `onboard_family`: tratar corrida `unique_violation` 23505 relendo e devolvendo o perfil/família existente.
+- `confirm_occurrence`: data do lançamento = `least(vencimento, hoje em America/Sao_Paulo)`; ajustar test 17.
 
 ## Migrations
 

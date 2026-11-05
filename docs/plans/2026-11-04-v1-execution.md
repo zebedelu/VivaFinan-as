@@ -34,7 +34,7 @@ Cada gate tem uma revisão inicial e no máximo duas re-revisões, conforme `dee
 - **Frontend:** `frontend/**`, incluindo testes de componente.
 - **E2E:** `tests/e2e/**`, `playwright.config.*`.
 
-Nenhuma lane edita arquivo de outra. O contrato de API e o contrato da IA ficam nos planos; mudanças de contrato passam pelo orchestrator.
+Nenhuma lane edita arquivo de outra. O contrato canônico é `docs/plans/2026-11-04-v1-contract.md`; os planos 2/3/4 são históricos. Mudanças de contrato passam pelo orchestrator.
 
 ## Ambiente e credenciais
 
@@ -74,7 +74,7 @@ Prefixo `/api`; autenticação `Authorization: Bearer <access_token do Supabase>
 - **Convite:** Admin API cria o auth user e envia e-mail; a linha `invites` é criada pelo admin; o convidado aceita via RPC. Sem service role, 503.
 - **Forecast:** estimativa rotulada; família só agregados; pessoal pode detalhar.
 - **Demo ignore:** exceção de status; raw continua bloqueado; documentar.
-- **Recorrentes:** materialização idempotente; confirmação com compensação; unique impede duplicata.
+- **Recorrentes:** materialização idempotente + releitura; RPC `confirm_occurrence` atômica; unique impede duplicata.
 - **Pluggy sem chave:** mock/demo; sync real 503.
 - **Jev AI sem chave:** fallback; modo degradado visível.
 - **Lockout do vínculo bancário:** o dono da conexão controla o vínculo; documentado na fatia 1.
