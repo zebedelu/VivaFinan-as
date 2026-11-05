@@ -85,7 +85,8 @@ positivos (28/28).
 - `20261104000400_demo_bank_ignore.sql`: dono pode alterar `status` de bank tx demo; raw continua bloqueado.
 - `20261104000500_confirm_occurrence.sql`: confirmação atômica de recorrente (sem compensação destrutiva).
 - `20261104000600_ai_suggestion_dedup.sql`: índice único de dedup de sugestões.
-- Testes `14`–`18` e ajuste do `08`/`11`; suíte 20 arquivos / 497 asserções.
+- `20261104000700_invites_auth_user.sql`: coluna `invites.auth_user_id` (uuid, nullable) para cancelar o convite apagando o usuário Auth; reconvidar o mesmo e-mail passa a funcionar.
+- Testes `14`–`18` e ajuste do `08`/`11`; suíte 20 arquivos / 497 asserções (revalidada após a `000700`).
 
 `auth.email()`/`auth.uid()` existem no projeto. Os default privileges do hosted concedem ALL em tabelas novas para `anon`/`authenticated`; por isso `invites` faz `revoke all` antes dos grants.
 
