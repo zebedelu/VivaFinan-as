@@ -40,7 +40,7 @@ $env:PYTHONPATH='backend'
 .\.venv\Scripts\python.exe -m flask --app app run --port 5000
 ```
 
-`GET http://127.0.0.1:5000/api/health` responde `{"ok":true}`. Testes: `pytest -q backend/tests` (**180**).
+`GET http://127.0.0.1:5000/api/health` responde `{"ok":true}`. Com `$env:PYTHONPATH='backend'`, os testes rodam com `pytest -q backend/tests` (**180**).
 
 ## Frontend
 

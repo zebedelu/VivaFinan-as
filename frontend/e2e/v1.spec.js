@@ -45,12 +45,17 @@ test.describe.serial('VivaFinancas v1', () => {
         (r) => r.url().includes('/api/ai/classify') && r.request().method() === 'POST',
         { timeout: 45_000 },
       )
+      .then((r) => r.json())
       .catch(() => null)
     await dialog.getByLabel('Descrição').fill('Padaria E2E')
-    await classificou
+    const classified = await classificou
     const categoria = dialog.getByLabel('Categoria')
     await expect(categoria.locator('option')).not.toHaveCount(1, { timeout: 45_000 })
-    await categoria.selectOption({ index: 1 })
+    if (classified?.categoria_id) {
+      await expect(categoria).toHaveValue(classified.categoria_id)
+    } else {
+      await categoria.selectOption({ index: 1 })
+    }
     await dialog.getByLabel('Valor').fill('45,90')
     const salvar = dialog.getByRole('button', { name: 'Salvar lançamento' })
     await expect(salvar).toBeEnabled()
@@ -66,7 +71,7 @@ test.describe.serial('VivaFinancas v1', () => {
     const fila = page.getByRole('region', { name: 'Para confirmar' })
     await expect(fila).toBeVisible({ timeout: 45_000 })
     const primeiro = fila.locator('article').first()
-    if ((await primeiro.count()) === 0) test.skip(true, 'sem conta pendente no demo')
+    await expect(primeiro).toBeVisible({ timeout: 45_000 })
     await primeiro.getByRole('button', { name: 'Confirmar', exact: true }).click()
     await expect(page.getByText('Conta confirmada.')).toBeVisible({ timeout: 60_000 })
   })
@@ -78,7 +83,9 @@ test.describe.serial('VivaFinancas v1', () => {
     await page.getByRole('button', { name: /^Importar / }).first().click()
     const dialog = page.getByRole('dialog')
     const categoria = dialog.getByLabel('Categoria')
-    await page.waitForTimeout(2500)
+    await expect
+      .poll(async () => (await categoria.locator('option').count()) > 1, { timeout: 45_000 })
+      .toBe(true)
     if (!(await categoria.inputValue())) await categoria.selectOption({ index: 1 })
     await dialog.getByRole('button', { name: 'Importar', exact: true }).click()
     await expect(page.getByText('Transação importada.')).toBeVisible({ timeout: 60_000 })
