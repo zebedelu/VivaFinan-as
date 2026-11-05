@@ -1,5 +1,7 @@
 # Fatia 2 — Backend Flask + Pluggy (v1)
 
+> **Contrato canônico:** `docs/plans/2026-11-04-v1-contract.md` + `2026-11-04-gate0-remediation.md` + `2026-11-04-fatia-1b-migrations.md` vencem este plano onde houver conflito. As seções abaixo são históricas; a lane deve seguir o contrato canônico.
+
 **Data:** 2026-11-04
 **Depende de:** fatia 1 commitada (`629fce9`), 350/350 pgTAP.
 **Spec:** `docs/2026-10-27-vivafinancas-brainstorming.md` (§3, §4, §6, §7).

@@ -1,5 +1,7 @@
 # Fatia 3 — Frontend React (v1)
 
+> **Contrato canônico:** `docs/plans/2026-11-04-v1-contract.md` + `2026-11-04-gate0-remediation.md` + `2026-11-04-fatia-1b-migrations.md` vencem este plano onde houver conflito. As seções abaixo são históricas; a lane deve seguir o contrato canônico.
+
 **Data:** 2026-11-04
 **Depende de:** fatia 1 (`629fce9`) e contrato da fatia 2 (`docs/plans/2026-11-04-fatia-2-backend-pluggy.md`).
 **Spec:** `docs/2026-10-27-vivafinancas-brainstorming.md` (§2.3, §3, §5).
