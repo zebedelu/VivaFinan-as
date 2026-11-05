@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from typing import Any, Mapping
 
 from ...errors import ApiError
@@ -82,14 +83,20 @@ def sync_connection(
             amount = item.get("amount")
             if amount is None:
                 continue
-            tipo = "credito" if float(amount) >= 0 else "debito"
+            try:
+                value = float(amount)
+            except (TypeError, ValueError):
+                continue
+            if not math.isfinite(value):
+                continue
+            tipo = "credito" if value >= 0 else "debito"
             rows.append(
                 {
                     "bank_connection_id": connection["id"],
                     "bank_account_id": db_account_id,
                     "pluggy_transaction_id": str(item.get("id")),
                     "data": str(item.get("date"))[:10],
-                    "valor": abs(round(float(amount), 2)),
+                    "valor": abs(round(value, 2)),
                     "descricao": item.get("description") or "Transação",
                     "tipo": tipo,
                     "categoria_bancaria": item.get("category"),

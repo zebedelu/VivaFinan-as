@@ -164,7 +164,7 @@ def test_admin_invites_list_and_cancel_deletes_auth_user(make_client, fake, auth
     fake.add(
         "PATCH",
         "/rest/v1/invites",
-        [{"id": "inv-1", "status": "cancelado"}],
+        [{"id": "inv-1", "status": "cancelado", "auth_user_id": "invited-1"}],
     )
     listed = client.get("/api/admin/invites", headers=auth_headers)
     assert listed.status_code == 200
@@ -176,8 +176,8 @@ def test_admin_invites_list_and_cancel_deletes_auth_user(make_client, fake, auth
     assert body_of(request) == {"status": "cancelado"}
     assert request.url.params.get("status") == "eq.pendente"
     calls = fake.summary()
-    assert calls.index("DELETE /auth/v1/admin/users/invited-1") < calls.index(
-        "PATCH /rest/v1/invites"
+    assert calls.index("PATCH /rest/v1/invites") < calls.index(
+        "DELETE /auth/v1/admin/users/invited-1"
     )
     delete_call = fake.last("DELETE", "/auth/v1/admin/users/invited-1")
     assert delete_call.headers.get("apikey") == SERVICE_KEY
@@ -197,7 +197,7 @@ def test_cancel_invite_tolera_usuario_auth_ja_apagado(make_client, fake, auth_he
         {"message": "User not found"},
         status=404,
     )
-    fake.add("PATCH", "/rest/v1/invites", [{"id": "inv-1", "status": "cancelado"}])
+    fake.add("PATCH", "/rest/v1/invites", [{"id": "inv-1", "status": "cancelado", "auth_user_id": "invited-1"}])
     response = client.delete("/api/admin/invites/inv-1", headers=auth_headers)
     assert response.status_code == 200, response.get_json()
     assert fake.calls("PATCH", "/rest/v1/invites")
@@ -206,10 +206,10 @@ def test_cancel_invite_tolera_usuario_auth_ja_apagado(make_client, fake, auth_he
 def test_cancel_invite_sem_pendente_e_404(make_client, fake, auth_headers):
     client = make_client(SUPABASE_SERVICE_ROLE_KEY=SERVICE_KEY)
     profile_route(fake)
-    fake.add("GET", "/rest/v1/invites", [])
+    fake.add("PATCH", "/rest/v1/invites", [])
     response = client.delete("/api/admin/invites/inv-1", headers=auth_headers)
     assert response.status_code == 404
-    assert not fake.calls("PATCH", "/rest/v1/invites")
+    assert fake.calls("PATCH", "/rest/v1/invites")
     assert not fake.calls("DELETE", "/auth/v1/admin/users/invited-1")
 
 
@@ -223,7 +223,7 @@ def test_reinvite_after_cancel_uses_new_auth_user(make_client, fake, auth_header
         [{"id": "inv-1", "status": "pendente", "auth_user_id": "invited-1"}],
     )
     fake.add("DELETE", "/auth/v1/admin/users/invited-1", None)
-    fake.add("PATCH", "/rest/v1/invites", [{"id": "inv-1", "status": "cancelado"}])
+    fake.add("PATCH", "/rest/v1/invites", [{"id": "inv-1", "status": "cancelado", "auth_user_id": "invited-1"}])
     fake.add("POST", "/auth/v1/invite", {"id": "invited-2"})
     fake.add(
         "POST",

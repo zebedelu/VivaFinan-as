@@ -7,7 +7,7 @@ import re
 from flask import Blueprint, current_app, g, jsonify
 
 from ..auth import require_admin, require_profile, rest
-from ..errors import not_found, validation
+from ..errors import validation
 from ..models.categories import (
     create_category,
     delete_category,
@@ -104,31 +104,28 @@ def create_invite():
 def cancel_invite(invite_id: str):
     invite_id = safe_id(invite_id, "invite_id")
     client = rest()
-    rows = client.get(
-        "/rest/v1/invites",
-        {
-            "select": f"{INVITE_SELECT},auth_user_id",
-            "id": f"eq.{invite_id}",
-            "family_id": f"eq.{g.profile['family_id']}",
-            "status": "eq.pendente",
-            "limit": "1",
-        },
-    )
-    if not rows:
-        raise not_found("Convite pendente não encontrado.")
-    auth_user_id = rows[0].get("auth_user_id")
-    if auth_user_id:
-        AdminClient.from_config(current_app.config).delete_user(str(auth_user_id))
     cancelled = client.patch(
         "/rest/v1/invites",
         {"status": "cancelado"},
         {
             "id": f"eq.{invite_id}",
+            "family_id": f"eq.{g.profile['family_id']}",
             "status": "eq.pendente",
-            "select": INVITE_SELECT,
+            "select": f"{INVITE_SELECT},auth_user_id",
         },
     )
-    return jsonify({"ok": True, "invite": (cancelled or [{}])[0]})
+    row = (cancelled or [{}])[0]
+    auth_user_id = row.get("auth_user_id")
+    if auth_user_id:
+        try:
+            AdminClient.from_config(current_app.config).delete_user(str(auth_user_id))
+        except Exception:
+            current_app.logger.warning(
+                "Convite %s cancelado, mas o usuário Auth %s não foi apagado.",
+                invite_id,
+                auth_user_id,
+            )
+    return jsonify({"ok": True, "invite": row})
 
 
 @bp.get("/categories")
