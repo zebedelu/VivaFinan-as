@@ -1,0 +1,10 @@
+Flask>=3.1,<4
+flask-cors>=6,<7
+httpx>=0.28,<1
+psycopg[binary]>=3.2,<4
+python-dotenv>=1.0,<2
+tzdata>=2024
+
+# Desenvolvimento/testes
+pytest>=9,<10
+pytest-cov>=7,<8
