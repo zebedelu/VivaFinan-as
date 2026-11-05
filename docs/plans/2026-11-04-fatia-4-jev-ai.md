@@ -14,7 +14,7 @@ Serviço de IA do backend com um adaptador real (`JevAIAdapter`) e um fallback d
 
 - A lane de IA escreve `backend/app/services/ai/**` e `backend/tests/test_ai_service*`.
 - O backend importa `from app.services.ai import get_ai_service`; não edita os arquivos da IA.
-- O contrato abaixo é congelado; mudanças passam pelo orchestrator.
+- O contrato canônico é `docs/plans/2026-11-04-v1-contract.md`; a interface abaixo é histórica. Mudanças passam pelo orchestrator.
 
 ## Interface
 
