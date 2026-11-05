@@ -2,6 +2,26 @@ import { supabase } from '../lib/supabase'
 
 export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/+$/, '')
 
+let tokenCache = null
+try {
+  supabase.auth.onAuthStateChange?.((_event, session) => {
+    tokenCache = session?.access_token ?? null
+  })
+} catch {
+  tokenCache = null
+}
+
+async function currentToken() {
+  if (tokenCache) return tokenCache
+  try {
+    const { data } = await supabase.auth.getSession()
+    tokenCache = data?.session?.access_token ?? null
+  } catch {
+    tokenCache = null
+  }
+  return tokenCache
+}
+
 export class ApiError extends Error {
   constructor(status, payload, path) {
     const message =
@@ -40,13 +60,7 @@ async function readBody(res) {
 }
 
 export async function apiFetch(path, { method = 'GET', body, signal, headers = {} } = {}) {
-  let token = null
-  try {
-    const { data } = await supabase.auth.getSession()
-    token = data?.session?.access_token ?? null
-  } catch {
-    token = null
-  }
+  const token = await currentToken()
 
   let res
   try {
