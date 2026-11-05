@@ -12,7 +12,7 @@ def list_categories(rest: Any) -> list[dict[str, Any]]:
     rows = rest.get(
         "/rest/v1/categories",
         {
-            "select": "id,family_id,nome,tipo,personalizada,oculta,criado_por,criado_em",
+            "select": "id,family_id,nome,tipo,personalizada,oculta,criado_por",
             "order": "tipo.asc,nome.asc",
         },
     )
