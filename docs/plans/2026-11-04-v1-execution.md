@@ -16,7 +16,7 @@ Entregar a v1 utilizável ponta a ponta: migrations de fechamento (fatia 1b), ba
 | Fase | Entrega | Gate |
 |---|---|---|
 | 0 | Planos, preflight, revisão independente dos planos | `@oracle` antes de código (Conditional; remediation aplicada) |
-| 1a | Migrations `invites`, `family_forecast`, `onboard_family`, `demo_bank_ignore` + pgTAP | `@oracle` de RLS/contrato |
+| 1a | Migrations `invites`, `family_forecast`, `onboard_family`, `demo_bank_ignore`, `confirm_occurrence`, `ai_suggestion_dedup` + pgTAP | `@oracle` de RLS/contrato |
 | 1b | Backend Flask + Supabase REST/JWT + Pluggy mock/import/reconcile + pytest | `@oracle` de RLS/JWT/Pluggy |
 | 1c | Jev AI adaptador/fallback + testes | `@oracle` de IA/modo degradado |
 | 2 | Frontend React/Tailwind/Recharts + testes de componente | `@oracle` de design/API/estado |
@@ -28,7 +28,7 @@ Cada gate tem uma revisão inicial e no máximo duas re-revisões, conforme `dee
 ## Ownership (um escritor por arquivo)
 
 - **Orchestrator:** `docs/plans/**`, `.slim/deepwork/**`, `README.md`, `.env.example`, `.gitignore`, `.ignore`.
-- **Migrations 1b:** `supabase/migrations/2026110400*.sql`, `supabase/tests/14_*`..`16_*`, ajuste de `08_rls_banking_test.sql`.
+- **Migrations 1b:** `supabase/migrations/2026110400*.sql`, `supabase/tests/14_*`..`18_*`, ajuste de `08_rls_banking_test.sql`.
 - **Backend:** `backend/**`, exceto `backend/app/services/ai/**`; `backend/tests/**`, exceto `test_ai_service*`.
 - **IA:** `backend/app/services/ai/**`, `backend/tests/test_ai_service*`; entrega `base.py`/`__init__.py` antes do backend importar.
 - **Frontend:** `frontend/**`, incluindo testes de componente.
@@ -49,15 +49,15 @@ Nenhuma lane edita arquivo de outra. O contrato de API e o contrato da IA ficam 
 Prefixo `/api`; autenticação `Authorization: Bearer <access_token do Supabase>`. Erros `{error:{code,message,details?}}`; `Prefer: return=representation` em POST/PATCH/DELETE; 0 linhas por RLS → 403/404.
 
 - `GET /api/health` (público).
-- `GET /me`; `PATCH /me` (`nome`, `tema`); `POST /onboarding` (RPC `onboard_family`, idempotente; `/me` com `profile:null`).
-- `GET /dashboard?mes=YYYY-MM-01` (inclui `recorrentes_pendentes` e `acumulado`); `GET /me/summary?mes=...`; `GET /alerts`.
-- `GET/POST /transactions` (sem `recurring_rule_id`/`mes_referencia` no público); `PATCH/DELETE /transactions/{id}`.
-- `GET/POST /recurring/rules`; `PATCH /recurring/rules/{id}`; `GET /recurring/pending` (materializa ocorrências); `POST /recurring/occurrences/{id}/confirm|ignore`.
+- `GET /me`; `PATCH /me` (`nome`, `tema`); `POST /onboarding` (RPC `onboard_family`, idempotente; `/me` com `profile:null`); `GET /invites/mine` (convite pendente do e-mail do JWT).
+- `GET /dashboard?mes=YYYY-MM-01` (inclui `recorrentes_pendentes` e `acumulado`); `GET /me/summary?mes=...` (inclui `alertas`); `GET /alerts`.
+- `GET/POST /transactions` (sem `recurring_rule_id`/`mes_referencia`/`origem`/`bank_transaction_id` no público; pluggy só via `/banking/import`); `PATCH/DELETE /transactions/{id}`.
+- `GET/POST /recurring/rules`; `PATCH /recurring/rules/{id}`; `GET /recurring/pending` (materializa e relê ocorrências); `POST /recurring/occurrences/{id}/confirm` (RPC `confirm_occurrence` atômica) `|ignore`.
 - `GET/POST /goals`; `PATCH/DELETE /goals/{id}`; `GET/POST /goals/{id}/contributions`.
 - `GET /forecast?meses=12&escopo=familia|pessoal` (família via RPC `family_forecast`; pessoal via backend).
 - `GET/POST /ai/messages`; `POST /ai/classify`; `GET /ai/suggestions`; `PATCH /ai/suggestions/{id}/read`.
-- `GET/POST /banking/connections`; `DELETE /banking/connections/{id}` (status inativa; Pluggy delete se houver chave); `GET /banking/accounts`; `GET /banking/transactions`; `POST /banking/sync`; `POST /banking/import`; `POST /banking/reconcile`; `GET /banking/reconcile-candidates`; `POST /banking/ignore`.
-- `GET/PATCH /admin/members`; `GET/POST/DELETE /admin/invites`; `POST /invites/accept`; `POST /auth/recover` (recover); `GET/POST/PATCH/DELETE /categories`.
+- `GET/POST /banking/connections`; `DELETE /banking/connections/{id}` (status inativa; Pluggy delete se houver chave); `GET /banking/accounts`; `GET /banking/transactions`; `POST /banking/sync`; `POST /banking/import`; `POST /banking/reconcile`; `GET /banking/reconcile-candidates`; `POST /banking/ignore`; `POST /banking/unignore`.
+- `GET/PATCH /admin/members`; `GET/POST/DELETE /admin/invites`; `POST /invites/accept`; `POST /auth/v1/recover` (Supabase Auth, anon key); `GET/POST/PATCH/DELETE /categories`.
 - `POST /demo/restore` (somente membro demo; DB URL; recria usuários/dados; sign out UX).
 
 ## Critérios de aceite da v1
