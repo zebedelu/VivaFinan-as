@@ -32,6 +32,7 @@ export default function JevAI() {
   const suggestionsApi = useApi(`/ai/suggestions?escopo=${escopo}`)
   const [suggestions, setSuggestions] = useState([])
   const [mode, setMode] = useState(null)
+  const localMode = mode === 'fallback' || mode === 'degraded'
   const [composer, setComposer] = useState('')
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
@@ -109,7 +110,7 @@ export default function JevAI() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {mode && mode !== 'jev' ? <Badge tone="dourado">Modo local</Badge> : null}
+          {localMode ? <Badge tone="dourado">Modo local</Badge> : null}
           <SegmentedControl
             label="Escopo da conversa"
             value={escopo}
@@ -122,7 +123,7 @@ export default function JevAI() {
         </div>
       </div>
 
-      {mode && mode !== 'jev' ? (
+      {localMode ? (
         <p className="mt-5 rounded-control border border-dourado/40 bg-dourado-forte/10 px-4 py-3 text-sm">
           A Jev está em modo local: as respostas vêm de regras sobre os seus dados, sem IA externa.
           Tudo o que aparece aqui continua válido como ponto de partida.

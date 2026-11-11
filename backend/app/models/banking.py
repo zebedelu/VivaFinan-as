@@ -2,11 +2,32 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Mapping
 
 from ..errors import not_found
 from ..utils import clean_text, month_end_exclusive, month_start, parse_int, safe_id
 from ..utils import one_of
+
+
+def _iso(value: Any) -> str | None:
+    """Aceita só timestamps ISO válidos (o PostgREST recusaria o resto)."""
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        return datetime.fromisoformat(text.replace("Z", "+00:00")).isoformat()
+    except ValueError:
+        return None
+
+
+def connection_metadata(item: Mapping[str, Any]) -> dict[str, Any]:
+    """Metadados do item Pluggy persistidos em ``bank_connections``."""
+    return {
+        "consent_expires_at": _iso(item.get("consentExpiresAt")),
+        "execution_status": clean_text(item.get("executionStatus"), "execution_status", max_len=40),
+        "last_updated_at": _iso(item.get("lastUpdatedAt")),
+    }
 
 
 def list_connections(rest: Any) -> list[dict[str, Any]]:
@@ -16,7 +37,8 @@ def list_connections(rest: Any) -> list[dict[str, Any]]:
             "select": (
                 "id,family_id,member_id,pluggy_connection_id,institution_name,"
                 "institution_logo_url,account_name,account_type,account_number_masked,"
-                "status,consentido_em,ultima_sync_em,criada_em,atualizada_em,is_demo_sync"
+                "status,consentido_em,ultima_sync_em,criada_em,atualizada_em,is_demo_sync,"
+                "consent_expires_at,execution_status,last_updated_at"
             ),
             "order": "criada_em.desc",
         },
@@ -40,10 +62,11 @@ def create_connection(
     profile: Mapping[str, Any],
     user_id: str,
     data: Mapping[str, Any],
+    item: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     account_type = data.get("account_type") or None
     if account_type is not None:
-        account_type = one_of(account_type, ("corrente", "poupanca"), "account_type")
+        account_type = one_of(account_type, ("corrente", "poupanca", "cartao"), "account_type")
     payload = {
         "family_id": profile["family_id"],
         "member_id": user_id,
@@ -68,6 +91,10 @@ def create_connection(
         ),
         "is_demo_sync": False,
     }
+    if item:
+        payload.update(
+            {key: value for key, value in connection_metadata(item).items() if value is not None}
+        )
     rows = rest.post("/rest/v1/bank_connections", payload)
     return (rows or [{}])[0]
 

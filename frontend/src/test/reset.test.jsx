@@ -14,6 +14,7 @@ vi.mock('../lib/supabase', () => ({
   isSupabaseConfigured: true,
   DEMO_ACCOUNTS: [],
   DEMO_PASSWORD: '',
+  authConfirmUrl: (next = '/painel') => `http://localhost:5173/auth/confirm?next=${next}`,
 }))
 
 import { mockApi, renderApp } from './utils'
@@ -35,7 +36,7 @@ describe('Recuperação de senha', () => {
 
     await waitFor(() =>
       expect(authMock.resetPasswordForEmail).toHaveBeenCalledWith('ana@exemplo.com', {
-        redirectTo: 'http://localhost:5173/reset-password',
+        redirectTo: 'http://localhost:5173/auth/confirm?next=/reset-password',
       }),
     )
     expect(await screen.findByText(/link de recuperação chegará/)).toBeInTheDocument()

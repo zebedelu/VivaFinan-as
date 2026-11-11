@@ -14,7 +14,7 @@ import { useSession } from '../hooks/useSession'
 import { useTheme } from '../hooks/useTheme'
 import { formatDate, formatDateTime } from '../lib/format'
 import { CONNECTION_STATUS, PAPEL_LABEL, STATUS_MEMBRO_LABEL } from '../lib/labels'
-import { supabase } from '../lib/supabase'
+import { authConfirmUrl, supabase } from '../lib/supabase'
 import { apiFetch, errorMessage } from '../services/api'
 
 const ADMIN_503 = 'Admin API indisponível: configure SUPABASE_SERVICE_ROLE_KEY no servidor.'
@@ -165,7 +165,7 @@ function MembersSection() {
     event.preventDefault()
     setResetNotice('')
     const { error: authError } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: authConfirmUrl('/reset-password'),
     })
     if (authError) {
       setResetNotice(authError.message)

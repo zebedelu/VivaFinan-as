@@ -370,3 +370,102 @@ def test_sync_real_without_pluggy_key_is_503(client, fake, auth_headers):
     response = client.post("/api/banking/sync", headers=auth_headers, json={"connection_id": "bc1"})
     assert response.status_code == 503
     assert response.get_json()["error"]["code"] == "unavailable"
+
+
+class FakeConnectPluggy:
+    def __init__(self):
+        self.users: list[str] = []
+
+    def create_connect_token(self, user_id):
+        self.users.append(user_id)
+        return "tok-1"
+
+
+def test_connect_token_without_credentials_is_503(client, fake, auth_headers):
+    profile_route(fake)
+    response = client.post("/api/banking/connect_token", headers=auth_headers, json={})
+    assert response.status_code == 503
+    assert response.get_json()["error"]["code"] == "pluggy_not_configured"
+
+
+def test_connect_token_uses_profile_user_not_body(make_client, fake, auth_headers, monkeypatch):
+    client = make_client(PLUGGY_CLIENT_ID="cid", PLUGGY_CLIENT_SECRET="secret")
+    adapter = FakeConnectPluggy()
+    monkeypatch.setattr("app.blueprints.banking.build_adapter", lambda config: adapter)
+    profile_route(fake)
+
+    response = client.post("/api/banking/connect_token", headers=auth_headers, json={})
+    assert response.status_code == 200, response.get_json()
+    assert response.get_json() == {"accessToken": "tok-1", "clientUserId": "u-ana"}
+    assert adapter.users == ["u-ana"]
+
+    blocked = client.post(
+        "/api/banking/connect_token",
+        headers=auth_headers,
+        json={"clientUserId": "u-carlos"},
+    )
+    assert blocked.status_code == 422
+    assert adapter.users == ["u-ana"]
+
+
+def test_sync_v2_uses_date_window_and_maps_cartao(make_client, fake, auth_headers, monkeypatch):
+    client = make_client(
+        PLUGGY_CLIENT_ID="cid",
+        PLUGGY_CLIENT_SECRET="secret",
+        SUPABASE_SERVICE_ROLE_KEY="service-key",
+    )
+
+    class FakeSyncPluggy:
+        def __init__(self):
+            self.calls: list[tuple[str, str | None]] = []
+
+        def list_accounts(self, item_id):
+            return [
+                {
+                    "id": "acc-1",
+                    "name": "Cartão",
+                    "type": "CREDIT_CARD",
+                    "subtype": "CREDIT_CARD",
+                    "balance": -120.0,
+                }
+            ]
+
+        def list_transactions(self, account_id, *, date_from=None):
+            self.calls.append((account_id, date_from))
+            return [
+                {
+                    "id": "tx-1",
+                    "date": "2026-11-01",
+                    "amount": -45.9,
+                    "description": "Padaria",
+                }
+            ]
+
+    adapter = FakeSyncPluggy()
+    monkeypatch.setattr("app.services.pluggy.sync.build_adapter", lambda config: adapter)
+    profile_route(fake)
+    fake.add(
+        "GET",
+        "/rest/v1/bank_connections",
+        [
+            {
+                "id": "bc1",
+                "pluggy_connection_id": "item-1",
+                "is_demo_sync": False,
+                "ultima_sync_em": "2026-11-04T12:00:00+00:00",
+            }
+        ],
+    )
+    fake.add("POST", "/rest/v1/bank_accounts", [{"id": "ba1", "pluggy_account_id": "acc-1"}])
+    fake.add("POST", "/rest/v1/bank_transactions", [{"id": "bt1"}])
+    fake.add("PATCH", "/rest/v1/bank_connections", [{"id": "bc1"}])
+
+    response = client.post("/api/banking/sync", headers=auth_headers, json={"connection_id": "bc1"})
+    assert response.status_code == 200, response.get_json()
+    assert response.get_json()["accounts"] == 1
+    assert adapter.calls == [("acc-1", "2026-10-28")]
+    sent_accounts = body_of(fake.last("POST", "/rest/v1/bank_accounts"))
+    assert sent_accounts[0]["tipo"] == "cartao"
+    sent_transactions = body_of(fake.last("POST", "/rest/v1/bank_transactions"))
+    assert sent_transactions[0]["pluggy_transaction_id"] == "tx-1"
+    assert sent_transactions[0]["tipo"] == "debito"

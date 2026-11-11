@@ -19,12 +19,14 @@ from ..services.pluggy import (
     build_adapter,
     candidates,
     import_bank_transaction,
+    pluggy_configured,
     reconcile,
     set_status,
     sync_connection,
 )
 from ..schemas.banking import (
     validate_connection_create,
+    validate_connect_token,
     validate_import,
     validate_reconcile,
 )
@@ -43,19 +45,35 @@ def get_connections():
 @require_profile
 def post_connection():
     data = validate_connection_create(body())
-    if not (current_app.config.get("PLUGGY_API_KEY") or "").strip():
+    if not pluggy_configured(current_app.config):
         raise ApiError(
             503,
             "unavailable",
-            "Conexão bancária indisponível: configure PLUGGY_API_KEY no servidor.",
+            "Conexão bancária indisponível: configure PLUGGY_CLIENT_ID/PLUGGY_CLIENT_SECRET.",
         )
     item_id = safe_id(data.get("pluggy_connection_id"), "pluggy_connection_id", max_len=200)
     item = build_adapter(current_app.config).get_item(item_id)
     owner = str((item or {}).get("clientUserId") or "").strip()
     if owner != str(g.user["id"]):
         raise ApiError(403, "forbidden", "Esta conexão Pluggy pertence a outro usuário.")
-    row = create_connection(rest(), g.profile, str(g.user["id"]), data)
+    row = create_connection(rest(), g.profile, str(g.user["id"]), data, item)
     return jsonify({"connection": row}), 201
+
+
+@bp.post("/banking/connect_token")
+@require_profile
+def post_connect_token():
+    """Token do widget Pluggy; o ``clientUserId`` sai do JWT, nunca do body."""
+    validate_connect_token(body())
+    if not pluggy_configured(current_app.config):
+        raise ApiError(
+            503,
+            "pluggy_not_configured",
+            "Pluggy indisponível: configure PLUGGY_CLIENT_ID/PLUGGY_CLIENT_SECRET.",
+        )
+    user_id = str(g.user["id"])
+    token = build_adapter(current_app.config).create_connect_token(user_id)
+    return jsonify({"accessToken": token, "clientUserId": user_id})
 
 
 @bp.delete("/banking/connections/<connection_id>")
@@ -69,7 +87,7 @@ def remove_connection(connection_id: str):
             "forbidden",
             "Conexão de demonstração é somente leitura e não pode ser desconectada.",
         )
-    if (current_app.config.get("PLUGGY_API_KEY") or "").strip():
+    if pluggy_configured(current_app.config):
         adapter = build_adapter(current_app.config)
         adapter.delete_connection(str(connection["pluggy_connection_id"]))
     row = deactivate_connection(client, connection_id)

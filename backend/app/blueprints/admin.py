@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import uuid
 
 from flask import Blueprint, current_app, g, jsonify
 
@@ -68,7 +69,10 @@ def create_invite():
     admin = AdminClient.from_config(current_app.config)
     client = rest()
     family = get_family(client, str(g.profile["family_id"])) or {}
-    invited = admin.invite_user(email, {"nome": nome})
+    # O token nasce antes do convite para o e-mail já apontar para /invite/<token>.
+    token = str(uuid.uuid4())
+    redirect_to = f"{current_app.config['PUBLIC_SITE_URL']}/invite/{token}"
+    invited = admin.invite_user(email, {"nome": nome}, redirect_to=redirect_to)
     payload = {
         "family_id": g.profile["family_id"],
         "family_nome": family.get("nome") or "Família",
@@ -76,6 +80,7 @@ def create_invite():
         "nome": nome,
         "papel": "membro",
         "status": "pendente",
+        "token": token,
         "criado_por": g.user["id"],
         "auth_user_id": invited.get("id"),
     }

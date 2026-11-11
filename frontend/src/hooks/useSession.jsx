@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { authConfirmUrl, supabase } from '../lib/supabase'
 import { apiFetch } from '../services/api'
 
 export const SessionContext = createContext(null)
@@ -91,7 +91,10 @@ export function SessionProvider({ children }) {
     return supabase.auth.signUp({
       email,
       password,
-      options: { data: nome ? { nome } : undefined },
+      options: {
+        data: nome ? { nome } : undefined,
+        emailRedirectTo: authConfirmUrl('/painel'),
+      },
     })
   }, [])
 

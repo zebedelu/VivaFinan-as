@@ -245,7 +245,7 @@ export default function Banking() {
           ) : null}
 
           <div className="mt-4">
-            <PluggyConnect unavailable={connectionsApi.error?.status === 503} />
+            <PluggyConnect unavailable={connectionsApi.error?.status === 503} onCreated={refreshAll} />
           </div>
         </Section>
       ) : null}

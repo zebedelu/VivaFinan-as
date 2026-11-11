@@ -10,8 +10,14 @@ import os
 from pathlib import Path
 from typing import Any, Mapping
 
-DEFAULT_CORS = "http://localhost:5173,http://127.0.0.1:5173"
+DEFAULT_CORS = (
+    "http://localhost:5173,http://127.0.0.1:5173,"
+    # WebView do Capacitor (Etapa 6): a origem não é o domínio da Vercel.
+    "https://localhost,capacitor://localhost"
+)
 DEFAULT_DEMO_FAMILY_ID = "eeeeeeee-0000-4000-8000-000000000001"
+DEFAULT_PUBLIC_SITE_URL = "https://vivafinancas.vercel.app"
+DEFAULT_AI_MODEL = "deepseek-v4.1-flash"
 
 _BACKEND_ROOT = Path(__file__).resolve().parents[1]
 _DEFAULT_SEED_DIR = _BACKEND_ROOT / "seed"
@@ -37,6 +43,13 @@ def _seed_dir(value: str = "") -> str:
     return str(Path.cwd() / raw)
 
 
+def _number(name: str, default: float) -> float:
+    try:
+        return float(_env(name) or default)
+    except ValueError:
+        return default
+
+
 def _origins(value: Any) -> list[str]:
     if isinstance(value, (list, tuple)):
         return [str(item).strip() for item in value if str(item).strip()]
@@ -50,9 +63,17 @@ def build_config(overrides: Mapping[str, Any] | None = None) -> dict[str, Any]:
         "SUPABASE_SERVICE_ROLE_KEY": _env("SUPABASE_SERVICE_ROLE_KEY"),
         "SUPABASE_DB_URL": _env("SUPABASE_DB_URL"),
         "PLUGGY_API_KEY": _env("PLUGGY_API_KEY"),
+        "PLUGGY_CLIENT_ID": _env("PLUGGY_CLIENT_ID"),
+        "PLUGGY_CLIENT_SECRET": _env("PLUGGY_CLIENT_SECRET"),
+        "PLUGGY_WEBHOOK_SECRET": _env("PLUGGY_WEBHOOK_SECRET"),
         "PLUGGY_BASE_URL": _env("PLUGGY_BASE_URL", "https://api.pluggy.ai").rstrip("/"),
         "JEV_AI_BASE_URL": _env("JEV_AI_BASE_URL"),
         "JEV_AI_API_KEY": _env("JEV_AI_API_KEY"),
+        "JEV_AI_MODEL": _env("JEV_AI_MODEL", DEFAULT_AI_MODEL),
+        "JEV_AI_PROVIDER": _env("JEV_AI_PROVIDER"),
+        "JEV_AI_SESSION": _env("JEV_AI_SESSION"),
+        "JEV_AI_TIMEOUT": _number("JEV_AI_TIMEOUT", 75.0),
+        "PUBLIC_SITE_URL": _env("PUBLIC_SITE_URL", DEFAULT_PUBLIC_SITE_URL).rstrip("/"),
         "CORS_ORIGINS": _origins(_env("CORS_ORIGINS", DEFAULT_CORS)),
         "DEMO_FAMILY_ID": _env("DEMO_FAMILY_ID", DEFAULT_DEMO_FAMILY_ID),
         "SEED_DIR": _seed_dir(_env("SEED_DIR")),

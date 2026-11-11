@@ -3,22 +3,30 @@
 from __future__ import annotations
 
 import math
+from datetime import datetime, timedelta
 from typing import Any, Mapping
 
 from ...errors import ApiError
 from ...supabase import ServiceRest
-from ...utils import now_sp
-from .adapter import build_adapter
+from ...utils import now_sp, today_sp
+from .adapter import account_tipo, build_adapter, pluggy_configured
 
-ACCOUNT_TYPES = {
-    "CHECKING_ACCOUNT": "corrente",
-    "SAVINGS_ACCOUNT": "poupanca",
-    "CREDIT_CARD": None,
-}
+SYNC_WINDOW_DAYS = 90
+SYNC_OVERLAP_DAYS = 7
 
 
-def _account_tipo(value: Any) -> str:
-    return ACCOUNT_TYPES.get(str(value or ""), "corrente") or "corrente"
+def _date_from(connection: Mapping[str, Any]) -> str:
+    """Janela do ``dateFrom``: retoma da última sync com sobreposição de 7 dias."""
+    last = str(connection.get("ultima_sync_em") or "").strip()
+    if last:
+        try:
+            return (
+                datetime.fromisoformat(last.replace("Z", "+00:00")).date()
+                - timedelta(days=SYNC_OVERLAP_DAYS)
+            ).isoformat()
+        except ValueError:
+            pass
+    return (today_sp() - timedelta(days=SYNC_WINDOW_DAYS)).isoformat()
 
 
 def sync_connection(
@@ -36,11 +44,11 @@ def sync_connection(
         }
 
     adapter = build_adapter(config)
-    if not (config.get("PLUGGY_API_KEY") or "").strip():
+    if not pluggy_configured(config):
         raise ApiError(
             503,
             "unavailable",
-            "Sincronização indisponível: configure PLUGGY_API_KEY no servidor.",
+            "Sincronização indisponível: configure PLUGGY_CLIENT_ID/PLUGGY_CLIENT_SECRET no servidor.",
         )
     service = ServiceRest.from_config(config)
 
@@ -50,7 +58,7 @@ def sync_connection(
             "connection_id": connection["id"],
             "pluggy_account_id": str(account.get("id")),
             "nome": account.get("name") or "Conta",
-            "tipo": _account_tipo(account.get("type")),
+            "tipo": account_tipo(account),
             "currency": "BRL",
             "balance": account.get("balance") or 0,
         }
@@ -73,13 +81,14 @@ def sync_connection(
         }
 
     transactions = 0
+    date_from = _date_from(connection)
     for account in accounts:
         account_id = str(account.get("id") or "")
         db_account_id = saved_accounts.get(account_id)
         if not db_account_id:
             continue
         rows = []
-        for item in adapter.list_transactions(account_id):
+        for item in adapter.list_transactions(account_id, date_from=date_from):
             amount = item.get("amount")
             if amount is None:
                 continue

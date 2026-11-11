@@ -323,10 +323,17 @@ class AdminClient:
         except ValueError:
             return None
 
-    def invite_user(self, email: str, data: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    def invite_user(
+        self,
+        email: str,
+        data: Mapping[str, Any] | None = None,
+        redirect_to: str | None = None,
+    ) -> dict[str, Any]:
         payload: dict[str, Any] = {"email": email}
         if data:
             payload["data"] = dict(data)
+        if redirect_to:
+            payload["redirect_to"] = redirect_to
         result = self._request("POST", "/auth/v1/invite", payload)
         return result if isinstance(result, dict) else {}
 

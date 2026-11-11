@@ -67,6 +67,49 @@ O resultado esperado de um teste verde e `ok ...` para cada assercao. Qualquer
 O seed `010`-`040` e idempotente: limpa os dados demo e recria; a segunda
 execucao mantem as contagens.
 
+## Auth e e-mail (dashboard)
+
+Os links de e-mail passam por `/auth/confirm` no SPA, que chama
+`supabase.auth.verifyOtp({ token_hash, type })` uma unica vez e segue para
+`/reset-password` quando `type=recovery` (a sessao ja chega ativa); nos demais
+tipos usa `next` (destino do proprio app) ou `/painel`. Link sem `token_hash` ou
+expirado mostra mensagem com volta para `/login`.
+
+Configuracao no painel do Supabase, em **Authentication**:
+
+- **URL Configuration**: Site URL `https://vivafinancas.vercel.app`; Redirect
+  URLs `https://vivafinancas.vercel.app/**`, `http://localhost:5173/**` e
+  `vivafinancas://**` (APK).
+- **Confirm email** ligado: o cadastro so entra depois de confirmar.
+- **SMTP**: Mailjet com remetente single sender verificado.
+- Templates **Confirm signup**, **Invite** e **Reset password** com `token_hash`
+  (nao use `{{ .ConfirmationURL }}`: ele nao passa o hash para o SPA).
+  `Confirm signup` e reset usam `{{ .RedirectTo }}`, que o app monta como
+  `/auth/confirm?next=/painel` ou `/auth/confirm?next=/reset-password`; o convite
+  usa `{{ .SiteURL }}` e leva `{{ .RedirectTo }}` em `next`.
+
+Confirm signup:
+
+```html
+<a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=signup">Confirmar e-mail</a>
+```
+
+Invite (o backend envia `redirect_to=PUBLIC_SITE_URL/invite/<token>`):
+
+```html
+<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite&next={{ .RedirectTo }}">Aceitar convite</a>
+```
+
+Reset password:
+
+```html
+<a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=recovery">Criar nova senha</a>
+```
+
+`PUBLIC_SITE_URL` no backend (default `https://vivafinancas.vercel.app`) monta o
+`redirect_to` do convite; o token do convite e gerado antes da chamada a Admin
+API e gravado em `invites.token`.
+
 ## Correcao C1 - vinculo bancario
 
 `20261103001500_bank_link_guard.sql` adiciona `tg_guard_transaction_bank_link`

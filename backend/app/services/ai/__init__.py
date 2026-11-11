@@ -2,9 +2,11 @@
 
 Ponto de entrada: ``get_ai_service()``.
 
-- ``JEV_AI_BASE_URL`` + ``JEV_AI_API_KEY`` -> ``JevAIAdapter`` embrulhado em
-  :class:`ResilientAIAdapter` (modo ``jev``, cai para ``degraded`` na falha).
-- Sem chave -> ``FallbackLLMAdapter`` (modo ``fallback``).
+- ``JEV_AI_BASE_URL`` + ``JEV_AI_API_KEY`` com ``JEV_AI_PROVIDER=opencode``
+  (ou base contendo ``opencode``) -> ``OpenCodeGoAdapter`` (modo ``opencode``).
+- Caso contrário, a mesma dupla -> ``JevAIAdapter`` (modo ``jev``).
+- Os dois adaptadores reais são embrulhados em :class:`ResilientAIAdapter`.
+- Sem chave/base -> ``FallbackLLMAdapter`` (modo ``fallback``).
 - Falha/timeout/HTTP >= 400 ou contexto vazio -> fallback no mesmo request e
   ``mode == "degraded"``.
 """
@@ -25,6 +27,7 @@ from .base import (
 )
 from .fallback import FallbackLLMAdapter
 from .jev import JevAIAdapter
+from .opencode import DEFAULT_MODEL, DEFAULT_TIMEOUT, OpenCodeGoAdapter
 
 __all__ = [
     "AIAdapter",
@@ -36,6 +39,7 @@ __all__ = [
     "SEM_ESTIMATIVA",
     "FallbackLLMAdapter",
     "JevAIAdapter",
+    "OpenCodeGoAdapter",
     "ResilientAIAdapter",
     "get_ai_service",
 ]
@@ -113,6 +117,32 @@ class ResilientAIAdapter:
         return result
 
 
+def _text(source: Mapping[str, Any], key: str) -> str:
+    value = source.get(key)
+    return "" if value is None else str(value).strip()
+
+
+def _seconds(source: Mapping[str, Any], key: str, default: float) -> float:
+    value = source.get(key)
+    if value is None or value == "":
+        return default
+    try:
+        seconds = float(value)
+    except (TypeError, ValueError):
+        return default
+    return seconds if seconds > 0 else default
+
+
+def _uses_opencode(provider: str, base_url: str) -> bool:
+    """``JEV_AI_PROVIDER`` manda; sem ele, a base contendo ``opencode`` decide."""
+    normalized = (provider or "").strip().lower()
+    if normalized == "opencode":
+        return True
+    if normalized:
+        return False
+    return "opencode" in (base_url or "").lower()
+
+
 def get_ai_service(
     env: Mapping[str, str] | None = None,
     *,
@@ -124,11 +154,21 @@ def get_ai_service(
     omitido e o cliente usa a rede.
     """
     source = os.environ if env is None else env
-    base_url = (source.get("JEV_AI_BASE_URL") or "").strip()
-    api_key = (source.get("JEV_AI_API_KEY") or "").strip()
+    base_url = _text(source, "JEV_AI_BASE_URL")
+    api_key = _text(source, "JEV_AI_API_KEY")
 
     if not base_url or not api_key:
         return FallbackLLMAdapter()
 
-    primary = JevAIAdapter(base_url, api_key, transport=transport)
+    if _uses_opencode(_text(source, "JEV_AI_PROVIDER"), base_url):
+        primary: AIAdapter = OpenCodeGoAdapter(
+            base_url,
+            api_key,
+            model=_text(source, "JEV_AI_MODEL") or DEFAULT_MODEL,
+            session=_text(source, "JEV_AI_SESSION"),
+            timeout=_seconds(source, "JEV_AI_TIMEOUT", DEFAULT_TIMEOUT),
+            transport=transport,
+        )
+    else:
+        primary = JevAIAdapter(base_url, api_key, transport=transport)
     return ResilientAIAdapter(primary, FallbackLLMAdapter())

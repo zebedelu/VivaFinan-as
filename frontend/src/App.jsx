@@ -1,6 +1,7 @@
-import { Link, Route, Routes } from 'react-router-dom'
+import { Link, Navigate, Route, Routes } from 'react-router-dom'
 import AppShell from './components/AppShell'
 import ProtectedRoute from './components/ProtectedRoute'
+import AuthConfirm from './pages/AuthConfirm'
 import Dashboard from './pages/Dashboard'
 import Individual from './pages/Individual'
 import Invite from './pages/Invite'
@@ -34,8 +35,10 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/auth/confirm" element={<AuthConfirm />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/invite/:token" element={<Invite />} />
+      <Route path="/painel" element={<Navigate to="/" replace />} />
       <Route element={<ProtectedRoute />}>
         <Route path="/onboarding" element={<Onboarding />} />
         <Route element={<AppShell />}>

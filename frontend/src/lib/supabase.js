@@ -15,6 +15,11 @@ export const supabase = createClient(url || 'http://localhost:54321', anonKey ||
   },
 })
 
+// Links de e-mail do Supabase caem em /auth/confirm, onde o SPA chama verifyOtp.
+export function authConfirmUrl(next = '/painel') {
+  return `${window.location.origin}/auth/confirm?next=${next}`
+}
+
 export const DEMO_ACCOUNTS = [
   { nome: 'Ana', papel: 'Administradora', email: 'ana@demo.vivafinancas.app' },
   { nome: 'Carlos', papel: 'Membro', email: 'carlos@demo.vivafinancas.app' },

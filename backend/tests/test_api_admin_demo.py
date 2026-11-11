@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+import uuid
 
 from conftest import (
     FAMILY,
@@ -35,38 +36,46 @@ def test_admin_members_requires_admin(client, fake, auth_headers):
 
 
 def test_admin_invite_uses_service_role_only_for_admin_api(make_client, fake, auth_headers):
-    client = make_client(SUPABASE_SERVICE_ROLE_KEY=SERVICE_KEY)
+    client = make_client(SUPABASE_SERVICE_ROLE_KEY=SERVICE_KEY, PUBLIC_SITE_URL="https://app.example.com")
     profile_route(fake)
     fake.add("GET", "/rest/v1/families", [FAMILY])
     fake.add("POST", "/auth/v1/invite", {"id": "invited-1", "email": "novo@example.com"})
-    fake.add(
-        "POST",
-        "/rest/v1/invites",
-        [
+
+    def invite_row(request):
+        sent = body_of(request)
+        return [
             {
                 "id": "inv-1",
-                "token": "22222222-2222-4222-8222-222222222222",
-                "email": "novo@example.com",
+                "token": sent["token"],
+                "email": sent["email"],
             }
-        ],
-    )
+        ]
+
+    fake.add("POST", "/rest/v1/invites", handler=invite_row)
     response = client.post(
         "/api/admin/invites",
         headers=auth_headers,
         json={"email": "Novo@Example.com", "nome": "Novo"},
     )
     assert response.status_code == 201, response.get_json()
+    sent = body_of(fake.last("POST", "/rest/v1/invites"))
     assert response.get_json() == {
         "invite_id": "inv-1",
-        "token": "22222222-2222-4222-8222-222222222222",
+        "token": sent["token"],
         "email": "novo@example.com",
     }
     admin_call = fake.last("POST", "/auth/v1/invite")
     assert admin_call.headers.get("apikey") == SERVICE_KEY
+    admin_body = body_of(admin_call)
+    assert admin_body["email"] == "novo@example.com"
+    assert admin_body["data"] == {"nome": "Novo"}
+    assert admin_body["redirect_to"] == f"https://app.example.com/invite/{sent['token']}"
+    uuid.UUID(sent["token"])
+    calls = fake.summary()
+    assert calls.index("POST /auth/v1/invite") < calls.index("POST /rest/v1/invites")
     row_call = fake.last("POST", "/rest/v1/invites")
     assert row_call.headers.get("apikey") == "anon-key"
     assert row_call.headers.get("authorization") == f"Bearer {USER_JWT}"
-    sent = body_of(row_call)
     assert sent["family_id"] == "fam-1"
     assert sent["family_nome"] == "Família Souza"
     assert sent["criado_por"] == "u-ana"
@@ -105,6 +114,15 @@ def test_admin_invite_compensates_when_row_fails(make_client, fake, auth_headers
     assert response.status_code == 409
     assert response.get_json()["error"]["code"] == "conflict"
     assert fake.calls("DELETE", "/auth/v1/admin/users/invited-1")
+    calls = fake.summary()
+    assert calls.index("POST /auth/v1/invite") < calls.index("POST /rest/v1/invites")
+    assert calls.index("POST /rest/v1/invites") < calls.index(
+        "DELETE /auth/v1/admin/users/invited-1"
+    )
+    sent = body_of(fake.last("POST", "/rest/v1/invites"))
+    assert body_of(fake.last("POST", "/auth/v1/invite"))["redirect_to"] == (
+        f"https://vivafinancas.vercel.app/invite/{sent['token']}"
+    )
 
 
 def test_admin_patch_member_blocks_papel(client, fake, auth_headers):

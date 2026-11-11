@@ -35,6 +35,10 @@ def ai_service() -> Any:
     env = {
         "JEV_AI_BASE_URL": current_app.config.get("JEV_AI_BASE_URL") or "",
         "JEV_AI_API_KEY": current_app.config.get("JEV_AI_API_KEY") or "",
+        "JEV_AI_MODEL": current_app.config.get("JEV_AI_MODEL") or "",
+        "JEV_AI_PROVIDER": current_app.config.get("JEV_AI_PROVIDER") or "",
+        "JEV_AI_SESSION": current_app.config.get("JEV_AI_SESSION") or "",
+        "JEV_AI_TIMEOUT": current_app.config.get("JEV_AI_TIMEOUT") or 0,
     }
     service = get_ai_service(env, transport=current_app.config.get("AI_TRANSPORT"))
     current_app.extensions["ai_service"] = service

@@ -4,7 +4,7 @@ import AuthLayout from '../components/AuthLayout'
 import Button from '../components/Button'
 import { Field, Input } from '../components/FormField'
 import { useSession } from '../hooks/useSession'
-import { supabase } from '../lib/supabase'
+import { authConfirmUrl, supabase } from '../lib/supabase'
 import { apiFetch, errorMessage } from '../services/api'
 
 export default function ResetPassword() {
@@ -30,7 +30,7 @@ export default function ResetPassword() {
     setBusy(true)
     try {
       const { error: authError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: authConfirmUrl('/reset-password'),
       })
       if (authError) {
         setError(
