@@ -1,6 +1,8 @@
-import { Link, Navigate, Route, Routes } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Link, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import AppShell from './components/AppShell'
 import ProtectedRoute from './components/ProtectedRoute'
+import { subscribeToResetDeepLink } from './lib/deepLink'
 import AuthConfirm from './pages/AuthConfirm'
 import Dashboard from './pages/Dashboard'
 import Individual from './pages/Individual'
@@ -32,6 +34,27 @@ function NotFound() {
 }
 
 export default function AppRoutes() {
+  const navigate = useNavigate()
+
+  // No app nativo, abrir vivafinancas://reset-password leva direto ao formulário.
+  // No browser o helper não registra listener nenhum.
+  useEffect(() => {
+    let unsubscribe = () => {}
+    let cancelled = false
+
+    subscribeToResetDeepLink((route) => navigate(route, { replace: true }))
+      .then((stop) => {
+        if (cancelled) stop()
+        else unsubscribe = stop
+      })
+      .catch(() => {})
+
+    return () => {
+      cancelled = true
+      unsubscribe()
+    }
+  }, [navigate])
+
   return (
     <Routes>
       <Route path="/login" element={<Login />} />

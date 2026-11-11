@@ -29,6 +29,9 @@ export default defineConfig(({ command, mode }) => {
 
   return {
     plugins: [react()],
+    // WebView do Android embarcado pode ser antigo; chrome87 é o piso do
+    // Capacitor 8 e evita sintaxe que o WebView não executa.
+    build: { target: 'chrome87' },
     server: { port: 5173 },
     test: {
       environment: 'jsdom',

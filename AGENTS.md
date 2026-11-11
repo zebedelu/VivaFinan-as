@@ -15,7 +15,7 @@ Backend (`.venv` lives at repo root; `PYTHONPATH=backend` is required or `app` i
 
 ```powershell
 $env:PYTHONPATH='backend'
-.\.venv\Scripts\python.exe -m pytest -q backend/tests          # 180 tests, fully mocked (no network/Supabase)
+.\.venv\Scripts\python.exe -m pytest -q backend/tests          # 216 tests, fully mocked (no network/Supabase)
 .\.venv\Scripts\python.exe -m flask --app app run --port 5000  # health: GET /api/health
 ```
 
@@ -23,7 +23,7 @@ Frontend:
 
 ```powershell
 cd frontend
-npm test                  # Vitest, 47 tests, e2e excluded by vite.config.js
+npm test                  # Vitest, 59 tests, e2e excluded by vite.config.js
 npm run build
 npm run dev               # port 5173
 ```

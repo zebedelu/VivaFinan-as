@@ -2,6 +2,8 @@
 
 Finanças da família em uma página: painel do mês, lançamentos, contas recorrentes, metas, previsão de 12 meses, Jev AI e extrato bancário (demo).
 
+**Entrega escolar (11/11/2026):** app em https://vivafinancas.vercel.app · documentação da entrega em [docs/entrega-2026-11-11.md](docs/entrega-2026-11-11.md).
+
 ## Stack
 
 - **Banco**: Supabase/Postgres 17.11 com RLS por membro, Auth e RPCs (`family_forecast`, `onboard_family`, `accept_invite`, `confirm_occurrence`).
@@ -40,7 +42,7 @@ $env:PYTHONPATH='backend'
 .\.venv\Scripts\python.exe -m flask --app app run --port 5000
 ```
 
-`GET http://127.0.0.1:5000/api/health` responde `{"ok":true}`. Com `$env:PYTHONPATH='backend'`, os testes rodam com `pytest -q backend/tests` (**180**).
+`GET http://127.0.0.1:5000/api/health` responde `{"ok":true}`. Com `$env:PYTHONPATH='backend'`, os testes rodam com `pytest -q backend/tests` (**216**).
 
 ## Frontend
 
@@ -51,7 +53,7 @@ Copy-Item .env.example .env.local   # VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY,
 npm run dev
 ```
 
-Testes: `npm test` (**47**). Build: `npm run build`.
+Testes: `npm test` (**59**). Build: `npm run build`.
 
 ## E2E
 
