@@ -32,9 +32,13 @@ $env:PYTHONPATH='backend'
 | `JEV_AI_BASE_URL` / `JEV_AI_API_KEY` | Jev AI; sem chave, fallback determinístico |
 | `CORS_ORIGINS` | origens do frontend, separadas por vírgula |
 | `DEMO_FAMILY_ID` | família que pode chamar `/api/demo/restore` |
-| `SEED_DIR` | pasta com `010`–`040` do seed |
+| `SEED_DIR` | pasta com `010`–`040` do seed (default `backend/seed`, cópia do seed canônico em `supabase/seed`) |
 
 Nenhuma chave tem valor no repositório. `backend/.env` está no `.gitignore`.
+
+`backend/seed/` é a cópia de deploy de `supabase/seed/` (o seed canônico). O teste
+`backend/tests/test_seed_sync.py` falha se as duas pastas divergirem — copie os
+arquivos de novo depois de mexer no seed.
 
 ## Arquitetura
 

@@ -13,12 +13,28 @@ from typing import Any, Mapping
 DEFAULT_CORS = "http://localhost:5173,http://127.0.0.1:5173"
 DEFAULT_DEMO_FAMILY_ID = "eeeeeeee-0000-4000-8000-000000000001"
 
-_REPO_ROOT = Path(__file__).resolve().parents[2]
-_DEFAULT_SEED_DIR = _REPO_ROOT / "supabase" / "seed"
+_BACKEND_ROOT = Path(__file__).resolve().parents[1]
+_DEFAULT_SEED_DIR = _BACKEND_ROOT / "seed"
 
 
 def _env(name: str, default: str = "") -> str:
     return (os.environ.get(name) or default).strip()
+
+
+def _seed_dir(value: str = "") -> str:
+    """Resolve ``SEED_DIR``; o default é ``backend/seed`` (cópia do seed canônico).
+
+    Caminhos absolutos passam direto. Relativos são tentados primeiro a partir de
+    ``backend/`` (layout do deploy, onde ``SEED_DIR=seed``) e depois a partir do
+    cwd (permite ``SEED_DIR=supabase/seed`` rodando da raiz do repositório).
+    """
+    raw = Path(value or _DEFAULT_SEED_DIR)
+    if raw.is_absolute():
+        return str(raw)
+    backend_relative = _BACKEND_ROOT / raw
+    if backend_relative.is_dir() or not (Path.cwd() / raw).is_dir():
+        return str(backend_relative)
+    return str(Path.cwd() / raw)
 
 
 def _origins(value: Any) -> list[str]:
@@ -39,7 +55,7 @@ def build_config(overrides: Mapping[str, Any] | None = None) -> dict[str, Any]:
         "JEV_AI_API_KEY": _env("JEV_AI_API_KEY"),
         "CORS_ORIGINS": _origins(_env("CORS_ORIGINS", DEFAULT_CORS)),
         "DEMO_FAMILY_ID": _env("DEMO_FAMILY_ID", DEFAULT_DEMO_FAMILY_ID),
-        "SEED_DIR": _env("SEED_DIR") or str(_DEFAULT_SEED_DIR),
+        "SEED_DIR": _seed_dir(_env("SEED_DIR")),
         "HTTP_TIMEOUT": 10.0,
         "HTTP_TRANSPORT": None,
         "AI_TRANSPORT": None,

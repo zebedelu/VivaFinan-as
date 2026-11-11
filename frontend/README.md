@@ -13,9 +13,12 @@ npm run dev
 ## Env
 
 - `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`: Auth e cliente Supabase. A anon key é pública; a service role nunca entra aqui.
-- `VITE_API_URL`: base da API Flask (padrão `http://localhost:5000/api`).
+- `VITE_API_URL`: base da API Flask. Default no código: `http://localhost:5000/api`; o `.env.production` define `/api` (Flask no mesmo domínio, via Vercel).
 
 Sem as duas primeiras o app compila, mas não autentica: não é artefato de deploy.
+`vite.config.js` tem um guard: se alguma das três `VITE_*` faltar, o build falha na
+Vercel (`VERCEL=1`) e em CI (`CI`). Localmente ele só avisa; `VITE_ENV_GUARD=strict`
+força a falha e `VITE_ENV_GUARD=off` desliga.
 
 ## Testes
 

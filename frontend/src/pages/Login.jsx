@@ -27,6 +27,9 @@ export default function Login() {
   const [busy, setBusy] = useState(false)
   const [demoBusy, setDemoBusy] = useState('')
 
+  // Atalhos da demo só em dev/teste. No build de produção (Vercel) ficam ocultos.
+  const showDemo = import.meta.env.DEV || import.meta.env.VITE_SHOW_DEMO_LOGIN === 'true'
+
   const nextParam = params.get('next') || '/'
   const next = nextParam.startsWith('/') ? nextParam : '/'
 
@@ -230,41 +233,43 @@ export default function Login() {
         </div>
       </form>
 
-      <div className="mt-8 rule pt-5">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm font-medium">Entrar na família de demonstração</p>
-          <span className="chip">Demo</span>
-        </div>
-        <p className="mt-1 text-xs text-muted">
-          Seis meses de histórico, metas e extrato simulado. Nenhuma conexão bancária real.
-        </p>
-        <ul className="mt-3">
-          {DEMO_ACCOUNTS.map((account) => (
-            <li key={account.email} className="flex items-center justify-between gap-3 border-b border-linha py-2.5 last:border-b-0">
-              <div className="min-w-0">
-                <p className="text-sm">
-                  {account.nome} <span className="text-xs text-muted">· {account.papel}</span>
-                </p>
-                <p className="truncate text-2xs text-muted">{account.email}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => demo(account)}
-                className="shrink-0 text-sm text-verde-texto underline decoration-verde-texto/30 underline-offset-4 hover:decoration-verde-texto disabled:opacity-50"
-                disabled={Boolean(demoBusy)}
-              >
-                {demoBusy === account.nome ? 'Entrando…' : `Entrar como ${account.nome}`}
-              </button>
-            </li>
-          ))}
-        </ul>
-        {!isSupabaseConfigured ? (
-          <p className="mt-3 text-2xs text-muted">
-            Ambiente sem Supabase configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY em
-            frontend/.env.local para entrar.
+      {showDemo ? (
+        <div className="mt-8 rule pt-5">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium">Entrar na família de demonstração</p>
+            <span className="chip">Demo</span>
+          </div>
+          <p className="mt-1 text-xs text-muted">
+            Seis meses de histórico, metas e extrato simulado. Nenhuma conexão bancária real.
           </p>
-        ) : null}
-      </div>
+          <ul className="mt-3">
+            {DEMO_ACCOUNTS.map((account) => (
+              <li key={account.email} className="flex items-center justify-between gap-3 border-b border-linha py-2.5 last:border-b-0">
+                <div className="min-w-0">
+                  <p className="text-sm">
+                    {account.nome} <span className="text-xs text-muted">· {account.papel}</span>
+                  </p>
+                  <p className="truncate text-2xs text-muted">{account.email}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => demo(account)}
+                  className="shrink-0 text-sm text-verde-texto underline decoration-verde-texto/30 underline-offset-4 hover:decoration-verde-texto disabled:opacity-50"
+                  disabled={Boolean(demoBusy)}
+                >
+                  {demoBusy === account.nome ? 'Entrando…' : `Entrar como ${account.nome}`}
+                </button>
+              </li>
+            ))}
+          </ul>
+          {!isSupabaseConfigured ? (
+            <p className="mt-3 text-2xs text-muted">
+              Ambiente sem Supabase configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY em
+              frontend/.env.local para entrar.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
     </AuthLayout>
   )
 }

@@ -850,6 +850,8 @@ function DemoSection() {
 
 export default function Settings() {
   const { profile, family } = useSession()
+  // Restaurar demo só em dev/teste. No build de produção a seção não aparece.
+  const showDemo = import.meta.env.DEV || import.meta.env.VITE_SHOW_DEMO_LOGIN === 'true'
   const sections = [
     { id: 'perfil', label: 'Perfil' },
     ...(profile?.papel === 'admin'
@@ -860,7 +862,7 @@ export default function Settings() {
       : []),
     { id: 'categorias', label: 'Categorias' },
     { id: 'contas-bancarias', label: 'Contas bancárias' },
-    ...(family?.is_demo ? [{ id: 'demo', label: 'Demonstração' }] : []),
+    ...(showDemo && family?.is_demo ? [{ id: 'demo', label: 'Demonstração' }] : []),
   ]
 
   return (
@@ -892,7 +894,7 @@ export default function Settings() {
           {profile?.papel === 'admin' ? <InvitesSection /> : null}
           <CategoriesSection />
           <BankingSection />
-          <DemoSection />
+          {showDemo ? <DemoSection /> : null}
         </div>
       </div>
     </div>
