@@ -125,6 +125,56 @@ def test_admin_invite_compensates_when_row_fails(make_client, fake, auth_headers
     )
 
 
+def test_admin_invite_maps_email_rate_limit(make_client, fake, auth_headers):
+    client = make_client(SUPABASE_SERVICE_ROLE_KEY=SERVICE_KEY)
+    profile_route(fake)
+    fake.add("GET", "/rest/v1/families", [FAMILY])
+    fake.add(
+        "POST",
+        "/auth/v1/invite",
+        {
+            "code": 429,
+            "error_code": "over_email_send_rate_limit",
+            "msg": "email rate limit exceeded",
+        },
+        status=429,
+    )
+    response = client.post(
+        "/api/admin/invites",
+        headers=auth_headers,
+        json={"email": "novo@example.com"},
+    )
+    assert response.status_code == 429
+    error = response.get_json()["error"]
+    assert error["code"] == "email_rate_limited"
+    assert "SMTP" in error["message"]
+    assert not fake.calls("POST", "/rest/v1/invites")
+
+
+def test_admin_invite_maps_email_exists(make_client, fake, auth_headers):
+    client = make_client(SUPABASE_SERVICE_ROLE_KEY=SERVICE_KEY)
+    profile_route(fake)
+    fake.add("GET", "/rest/v1/families", [FAMILY])
+    fake.add(
+        "POST",
+        "/auth/v1/invite",
+        {
+            "code": 422,
+            "error_code": "email_exists",
+            "msg": "A user with this email address has already been registered",
+        },
+        status=422,
+    )
+    response = client.post(
+        "/api/admin/invites",
+        headers=auth_headers,
+        json={"email": "novo@example.com"},
+    )
+    assert response.status_code == 409
+    assert response.get_json()["error"]["code"] == "conflict"
+    assert not fake.calls("POST", "/rest/v1/invites")
+
+
 def test_admin_patch_member_blocks_papel(client, fake, auth_headers):
     profile_route(fake)
     blocked = client.patch(

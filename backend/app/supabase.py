@@ -22,6 +22,26 @@ def _safe_message(payload: Any, fallback: str) -> str:
     return fallback
 
 
+# Erros do GoTrue que o admin precisa entender, traduzidos para o contrato da API.
+_ADMIN_API_ERRORS: dict[str, tuple[int, str, str]] = {
+    "over_email_send_rate_limit": (
+        429,
+        "email_rate_limited",
+        "O Supabase atingiu o limite de envio de e-mails. Configure o SMTP "
+        "(Authentication → Emails → SMTP) e tente de novo em alguns minutos.",
+    ),
+    "over_request_rate_limit": (
+        429,
+        "rate_limited",
+        "Muitas tentativas em pouco tempo. Espere alguns minutos e tente de novo.",
+    ),
+    "email_exists": (409, "conflict", "Este e-mail já está cadastrado."),
+    "email_address_invalid": (422, "validation_error", "E-mail inválido."),
+    "signup_disabled": (403, "forbidden", "O cadastro está desabilitado neste projeto."),
+    "invite_not_found": (404, "not_found", "Convite não encontrado."),
+}
+
+
 class SupabaseRest:
     """PostgREST com o JWT do usuário (ou service role, quando explícito)."""
 
@@ -308,9 +328,19 @@ class AdminClient:
                 payload = response.json()
             except ValueError:
                 payload = None
+            error_code = str((payload or {}).get("error_code") or "") if isinstance(payload, Mapping) else ""
+            if error_code in _ADMIN_API_ERRORS:
+                status, code, message = _ADMIN_API_ERRORS[error_code]
+                raise ApiError(status, code, message)
             message = _safe_message(payload, "A Admin API recusou a operação.")
             if response.status_code == 404:
                 raise ApiError(404, "not_found", "Recurso não encontrado na Admin API.")
+            if response.status_code == 429:
+                raise ApiError(
+                    429,
+                    "rate_limited",
+                    "O Supabase recusou por limite de requisições. Tente de novo em instantes.",
+                )
             if response.status_code == 422:
                 raise ApiError(409, "conflict", "Este e-mail já está cadastrado.", {"message": message})
             if response.status_code == 401 or response.status_code == 403:

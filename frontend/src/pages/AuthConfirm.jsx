@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import AuthLayout from '../components/AuthLayout'
 import { supabase } from '../lib/supabase'
 
@@ -17,6 +17,7 @@ function safeNext(value) {
 
 export default function AuthConfirm() {
   const [params] = useSearchParams()
+  const location = useLocation()
   const navigate = useNavigate()
   const started = useRef(false)
   const [error, setError] = useState('')
@@ -27,8 +28,50 @@ export default function AuthConfirm() {
 
     const tokenHash = params.get('token_hash')
     const type = params.get('type') || 'email'
+    const hash = new URLSearchParams(location.hash.replace(/^#/, ''))
+    const destination = type === 'recovery' ? '/reset-password' : safeNext(params.get('next')) || '/painel'
+
+    // Template padrão do Supabase ({{ .ConfirmationURL }}) consome o token no /verify
+    // e devolve a sessão no hash. O template com {{ .TokenHash }} manda token_hash.
+    const accessToken = hash.get('access_token')
+    const refreshToken = hash.get('refresh_token')
+    const code = params.get('code')
+
+    if (!tokenHash && accessToken && refreshToken) {
+      supabase.auth
+        .setSession({ access_token: accessToken, refresh_token: refreshToken })
+        .then(({ error: sessionError }) => {
+          if (sessionError) {
+            setError('O link expirou ou já foi usado. Peça um novo e-mail e tente de novo.')
+            return
+          }
+          navigate(destination, { replace: true })
+        })
+        .catch(() => setError('Não foi possível confirmar o link agora. Tente de novo em instantes.'))
+      return
+    }
+
+    if (!tokenHash && code) {
+      supabase.auth
+        .exchangeCodeForSession(code)
+        .then(({ error: exchangeError }) => {
+          if (exchangeError) {
+            setError('O link expirou ou já foi usado. Peça um novo e-mail e tente de novo.')
+            return
+          }
+          navigate(destination, { replace: true })
+        })
+        .catch(() => setError('Não foi possível confirmar o link agora. Tente de novo em instantes.'))
+      return
+    }
+
     if (!tokenHash) {
-      setError('O link chegou incompleto: falta o código de confirmação. Peça um novo e-mail.')
+      const hashError = hash.get('error_description') || hash.get('error_code')
+      setError(
+        hashError
+          ? 'O link expirou ou já foi usado. Peça um novo e-mail e tente de novo.'
+          : 'O link chegou incompleto: falta o código de confirmação. Peça um novo e-mail.',
+      )
       return
     }
 
@@ -39,13 +82,12 @@ export default function AuthConfirm() {
           setError('O link expirou ou já foi usado. Peça um novo e-mail e tente de novo.')
           return
         }
-        const destination = type === 'recovery' ? '/reset-password' : safeNext(params.get('next'))
-        navigate(destination || '/painel', { replace: true })
+        navigate(destination, { replace: true })
       })
       .catch(() => {
         setError('Não foi possível confirmar o link agora. Tente de novo em instantes.')
       })
-  }, [navigate, params])
+  }, [navigate, params, location.hash])
 
   return (
     <AuthLayout>

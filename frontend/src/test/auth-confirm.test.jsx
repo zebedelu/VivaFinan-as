@@ -73,4 +73,37 @@ describe('Confirmação de e-mail', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/link chegou incompleto/i)
     expect(authMock.verifyOtp).not.toHaveBeenCalled()
   })
+
+  it('aceita a sessão devolvida no hash pelo template padrão do Supabase', async () => {
+    authMock.setSession = vi.fn(async () => ({ data: { session: {} }, error: null }))
+    mockApi({})
+    renderApp({
+      route: '/auth/confirm?next=/painel#access_token=abc&refresh_token=def&type=signup',
+      session: null,
+      profile: null,
+      family: null,
+    })
+
+    await vi.waitFor(() =>
+      expect(authMock.setSession).toHaveBeenCalledWith({
+        access_token: 'abc',
+        refresh_token: 'def',
+      }),
+    )
+    expect(authMock.verifyOtp).not.toHaveBeenCalled()
+  })
+
+  it('explica link expirado quando o Supabase devolve erro no hash', async () => {
+    mockApi({})
+    renderApp({
+      route:
+        '/auth/confirm#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid',
+      session: null,
+      profile: null,
+      family: null,
+    })
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/expirou ou já foi usado/i)
+    expect(authMock.verifyOtp).not.toHaveBeenCalled()
+  })
 })
