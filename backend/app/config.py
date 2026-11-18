@@ -19,6 +19,10 @@ DEFAULT_CORS = (
 DEFAULT_DEMO_FAMILY_ID = "eeeeeeee-0000-4000-8000-000000000001"
 DEFAULT_PUBLIC_SITE_URL = "https://trabalho-terceiro-trimestre-vivafinancas.vercel.app"
 DEFAULT_AI_MODEL = "deepseek-v4.1-flash"
+# Projeto Supabase da entrega. URL e anon key são públicas (vão no bundle do
+# frontend em `frontend/.env.production`); envs do painel têm precedência.
+DEFAULT_SUPABASE_URL = "https://pqxfeyuutkkqavhnysus.supabase.co"
+DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxeGZleXV1dGtrcWF2aG55c3VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3MjkzNTUsImV4cCI6MjEwOTMwNTM1NX0.8aMKan6S-vk7VLFwF3S55XlPHwViCxqJ3tJjKnbuaBw"
 
 _BACKEND_ROOT = Path(__file__).resolve().parents[1]
 _DEFAULT_SEED_DIR = _BACKEND_ROOT / "seed"
@@ -59,8 +63,8 @@ def _origins(value: Any) -> list[str]:
 
 def build_config(overrides: Mapping[str, Any] | None = None) -> dict[str, Any]:
     config: dict[str, Any] = {
-        "SUPABASE_URL": _env("SUPABASE_URL").rstrip("/"),
-        "SUPABASE_ANON_KEY": _env("SUPABASE_ANON_KEY"),
+        "SUPABASE_URL": _env("SUPABASE_URL", DEFAULT_SUPABASE_URL).rstrip("/"),
+        "SUPABASE_ANON_KEY": _env("SUPABASE_ANON_KEY", DEFAULT_SUPABASE_ANON_KEY),
         "SUPABASE_SERVICE_ROLE_KEY": _env("SUPABASE_SERVICE_ROLE_KEY"),
         "SUPABASE_DB_URL": _env("SUPABASE_DB_URL"),
         "PLUGGY_API_KEY": _env("PLUGGY_API_KEY"),
