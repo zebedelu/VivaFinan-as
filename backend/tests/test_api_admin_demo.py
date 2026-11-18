@@ -121,7 +121,7 @@ def test_admin_invite_compensates_when_row_fails(make_client, fake, auth_headers
     )
     sent = body_of(fake.last("POST", "/rest/v1/invites"))
     assert body_of(fake.last("POST", "/auth/v1/invite"))["redirect_to"] == (
-        f"https://vivafinancas.vercel.app/invite/{sent['token']}"
+        f"https://trabalho-terceiro-trimestre-vivafinancas.vercel.app/invite/{sent['token']}"
     )
 
 

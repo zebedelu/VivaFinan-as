@@ -2,7 +2,7 @@
 
 Finanças da família em uma página: painel do mês, lançamentos, contas recorrentes, metas, previsão de 12 meses, Jev AI e extrato bancário (demo).
 
-**Entrega escolar (11/11/2026):** app em https://vivafinancas.vercel.app · documentação da entrega em [docs/entrega-2026-11-11.md](docs/entrega-2026-11-11.md).
+**Entrega escolar (11/11/2026):** app em https://trabalho-terceiro-trimestre-vivafinancas.vercel.app · documentação da entrega em [docs/entrega-2026-11-11.md](docs/entrega-2026-11-11.md).
 
 ## Stack
 

@@ -77,8 +77,8 @@ expirado mostra mensagem com volta para `/login`.
 
 Configuracao no painel do Supabase, em **Authentication**:
 
-- **URL Configuration**: Site URL `https://vivafinancas.vercel.app`; Redirect
-  URLs `https://vivafinancas.vercel.app/**`, `http://localhost:5173/**` e
+- **URL Configuration**: Site URL `https://trabalho-terceiro-trimestre-vivafinancas.vercel.app`; Redirect
+  URLs `https://trabalho-terceiro-trimestre-vivafinancas.vercel.app/**`, `http://localhost:5173/**` e
   `vivafinancas://**` (APK).
 - **Confirm email** ligado: o cadastro so entra depois de confirmar.
 - **SMTP**: Mailjet com remetente single sender verificado.
@@ -106,7 +106,7 @@ Reset password:
 <a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=recovery">Criar nova senha</a>
 ```
 
-`PUBLIC_SITE_URL` no backend (default `https://vivafinancas.vercel.app`) monta o
+`PUBLIC_SITE_URL` no backend (default `https://trabalho-terceiro-trimestre-vivafinancas.vercel.app`) monta o
 `redirect_to` do convite; o token do convite e gerado antes da chamada a Admin
 API e gravado em `invites.token`.
 

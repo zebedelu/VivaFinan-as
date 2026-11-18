@@ -11,12 +11,13 @@ from pathlib import Path
 from typing import Any, Mapping
 
 DEFAULT_CORS = (
+    "https://trabalho-terceiro-trimestre-vivafinancas.vercel.app,"
     "http://localhost:5173,http://127.0.0.1:5173,"
     # WebView do Capacitor (Etapa 6): a origem não é o domínio da Vercel.
     "https://localhost,capacitor://localhost"
 )
 DEFAULT_DEMO_FAMILY_ID = "eeeeeeee-0000-4000-8000-000000000001"
-DEFAULT_PUBLIC_SITE_URL = "https://vivafinancas.vercel.app"
+DEFAULT_PUBLIC_SITE_URL = "https://trabalho-terceiro-trimestre-vivafinancas.vercel.app"
 DEFAULT_AI_MODEL = "deepseek-v4.1-flash"
 
 _BACKEND_ROOT = Path(__file__).resolve().parents[1]
