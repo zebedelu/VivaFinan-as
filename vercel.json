@@ -7,7 +7,7 @@
       "entrypoint": "wsgi:app",
       "functions": {
         "wsgi.py": {
-          "maxDuration": 300
+          "maxDuration": 60
         }
       }
     },
