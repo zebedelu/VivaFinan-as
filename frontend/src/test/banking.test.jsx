@@ -174,8 +174,11 @@ describe('Extrato bancário', () => {
     const user = userEvent.setup()
     const calls = mockApi(routes())
     let widgetOptions
+    let widgetInstance
     window.PluggyConnect = vi.fn(function (options) {
       widgetOptions = options
+      widgetInstance = { init: vi.fn() }
+      return widgetInstance
     })
     renderApp({ route: '/banking' })
 
@@ -185,6 +188,7 @@ describe('Extrato bancário', () => {
     await waitFor(() => expect(findCall(calls, 'POST', '/banking/connect_token')).toBeTruthy())
     await waitFor(() => expect(widgetOptions).toBeTruthy())
     expect(window.PluggyConnect).toHaveBeenCalledTimes(1)
+    expect(widgetInstance.init).toHaveBeenCalledTimes(1)
     expect(widgetOptions.connectToken).toBe('tok-1')
     expect(widgetOptions.includeSandbox).toBe(false)
     expect(typeof widgetOptions.onSuccess).toBe('function')
@@ -201,6 +205,7 @@ describe('Extrato bancário', () => {
     let widgetOptions
     window.PluggyConnect = vi.fn(function (options) {
       widgetOptions = options
+      return { init: vi.fn() }
     })
     renderApp({ route: '/banking' })
 

@@ -81,13 +81,15 @@ export default function PluggyConnect({ unavailable = false, onCreated }) {
         return
       }
       const Widget = await loadPluggyScript()
-      new Widget({
+      const widget = new Widget({
         connectToken: token.accessToken,
         includeSandbox: false,
         onSuccess: ({ item } = {}) => saveConnection(item),
         onError: () => setError('Não foi possível concluir a conexão com o banco. Tente de novo.'),
         onClose: () => {},
       })
+      // O construtor só monta a instância; é o init() que abre o widget.
+      widget.init()
     } catch (err) {
       if (err?.status === 503) {
         setError('Integração bancária indisponível: a chave da Pluggy não está configurada no servidor.')
